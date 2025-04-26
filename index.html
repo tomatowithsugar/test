@@ -2,64 +2,74 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>자유 배정 프로그램</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>구역배정</title>
     <style>
+        * { box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont;
             margin: 0;
             padding: 20px;
             background: #f5f5f7;
         }
-        .zone-list {
-            display: grid;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
+        h1 { color: #007AFF; margin-bottom: 25px; }
+        .zone-list { gap: 15px; margin: 20px 0; }
         .zone-item {
             background: white;
             padding: 15px;
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
         }
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.5);
             padding: 20px;
-            overflow-y: auto;
         }
         .modal-content {
             background: white;
             padding: 20px;
             border-radius: 10px;
             max-width: 500px;
+            max-height: 80vh;
             margin: 20px auto;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .selected-area {
+            border: 2px solid #FFA500;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        #selectedNames {
+            color: #FFA500;
+            font-weight: bold;
+            min-height: 20px;
         }
         .name-tag {
             display: inline-block;
             margin: 5px;
-            padding: 8px 12px;
+            padding: 8px 15px;
             border-radius: 20px;
             border: 1px solid #e0e0e0;
             cursor: pointer;
-            transition: 0.2s;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        .name-tag.selected {
-            background: #007AFF;
-            color: white;
-            border-color: #007AFF;
-        }
+        .name-tag.selected { background: #007AFF; color: white; }
+        .name-tag.assigned { background: #f0f0f0; color: #999; }
         #searchInput {
             width: 100%;
             padding: 12px;
-            margin-bottom: 15px;
+            margin: 10px 0;
             border: 1px solid #ddd;
             border-radius: 8px;
+            font-size: 16px;
         }
         button {
             padding: 10px 20px;
@@ -69,19 +79,40 @@
             border-radius: 8px;
             cursor: pointer;
         }
+        .add-custom-btn { background: #34C759 !important; }
+        .edit-badge {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        #nameContainer {
+            overflow-y: auto;
+            flex-grow: 1;
+            padding: 10px 0;
+        }
     </style>
 </head>
 <body>
+    <h1>구역배정 프로그램</h1>
     <button onclick="addZone()">+ 새 구역 추가</button>
     <div class="zone-list" id="zoneList"></div>
 
-    <!-- 모달 창 -->
     <div class="modal" id="assignModal">
         <div class="modal-content">
             <h3 id="modalTitle"></h3>
             <input type="text" id="searchInput" placeholder="🔍 이름 검색" onkeyup="filterNames()">
+            
+            <!-- 선택 인원 표시 영역 -->
+            <div class="selected-area">
+                <h4>선택한 인원 (<span id="selectedCount">0</span>명)</h4>
+                <div id="selectedNames"></div>
+            </div>
+
             <div id="nameContainer"></div>
-            <div style="margin-top: 20px;">
+            <button class="add-custom-btn" onclick="addCustomPerson()">+ 직접 추가</button>
+            <div style="margin-top:20px;">
                 <button onclick="confirmAssignment()">완료</button>
                 <button onclick="closeModal()">취소</button>
             </div>
@@ -90,88 +121,218 @@
 
     <script>
         const volunteers = {
-            남자: ["박상익","임편수","임종목","전진해","이종호","김상연","사영환","서기원","김인기","전필용","김기권","박희범","박희종","서정길","정종민","정해균","이목영","이선","이현석","박원준","김은석","박진걸","전종경","김철호","정순도","박종화","양재은","양진우","정진수"],
-            여자: ["강승미","강승희","권영미","김복실","서광옥","안영자","이가영","이명윤","이영자","임귀녀","임여진","조금순","조인순","최문숙","최연진","강성임","권영숙","김동임","김옥순A","김은희","김춘조","변현숙","용옥자","우옥희","이영재","이희숙","임순자","조명자","양동순","양지예","양지은","김경애","김인희","김정숙","민규희","박여자","시예지","유민지","유순지","이금자","이화숙","최명수","홍은희","박선아","권수진","문설형","박은숙","박현숙","백경자","송옥순","신부지","이금덕","이아영","이재희","임애진","홍명순","김영아","곽순호","김솔","김영순","김옥순B","박순례","이경현","이지애","이희열","임규환","장평원","정송은","정옥연","최건자","김귀자","김영애","김인순","김희재","손귀선","신연순","심자인","연선미","이경순","이미애","이병임","이애선","서혜경"],
-            자녀: ["이채은","양다솜","박시우"]
+            형제: ["박상익","임현수","임종목","전진해","이종호","김상연","사영환","서기원","김인기","전필용","김기권","박희범","박희종","서정길","정종민","정해균","이목영","이선","이현석","박원준","김은석","박진걸","전종경","김철호","정순도","박종화","양재은","양진우","정진수"],
+            자매: ["강승미","강승희","권영미","김복실","서광옥","안영자","이가영","이명윤","이영자","임귀녀","임여진","조금순","조인순","최문숙","최연진","강성임","권영숙","김동임","김옥순A","김은희","김춘조","변현숙","용옥자","우옥희","이영재","이희숙","임순자","조명자","양동순","양지예","양지은","김경애","김인희","김정숙","민규희","박여자","시예지","유민지","유순지","이금자","이화숙","최명수","홍은희","박선아","권수진","문설형","박은숙","박현숙","백경자","송옥순","신부지","이금덕","이아영","이재희","임애진","홍명순","김영아","곽순호","김솔","김영순","김옥순B","박순례","이경현","이지애","이희열","임규환","장평원","정송은","정옥연","최건자","김귀자","김영애","김인순","김희재","손귀선","신연순","심자인","연선미","이경순","이미애","이병임","이애선","서혜경"],
+            자녀: ["이채은","양다솜","박시우"],
+            기타: []
         };
 
         let currentZone = null;
         let selectedNames = [];
+        let assignedPeople = [];
+        let assignments = {};
 
+        // 구역 추가
         function addZone() {
-            const zoneNumber = prompt("구역 번호를 입력하세요 (1-268)");
-            if (!zoneNumber || isNaN(zoneNumber) || zoneNumber < 1 || zoneNumber > 268) {
-                alert("1-268 사이의 숫자를 입력해주세요");
-                return;
-            }
-
-            const zoneItem = document.createElement('div');
-            zoneItem.className = 'zone-item';
-            zoneItem.innerHTML = `
-                <h4>구역 ${zoneNumber}</h4>
-                <button onclick="openAssignModal(${zoneNumber})">인원 배정</button>
-                <div id="result-${zoneNumber}" class="result-area"></div>
+            const zone = prompt("구역 번호 입력 (1-268)");
+            if(!zone || zone < 1 || zone > 268) return alert("1-268 사이 숫자 입력");
+            
+            document.getElementById('zoneList').innerHTML += `
+                <div class="zone-item">
+                    <h4>구역 ${zone}</h4>
+                    <span class="edit-badge">${assignments[zone]?.length || 0}명</span>
+                    <button onclick="openAssignModal(${zone})">인원배정</button>
+                    <div id="result-${zone}"></div>
+                </div>
             `;
-            document.getElementById('zoneList').appendChild(zoneItem);
         }
 
+        // 모달 열기
         function openAssignModal(zone) {
             currentZone = zone;
+            selectedNames = [...(assignments[zone] || [])];
             document.getElementById('modalTitle').textContent = `구역 ${zone} 배정`;
             document.getElementById('assignModal').style.display = 'block';
+            updateSelectedDisplay();
             renderNames();
         }
 
+        // 이름 렌더링
         function renderNames() {
             let html = '';
-            for (const [gender, names] of Object.entries(volunteers)) {
-                html += `<div class="gender-group"><h4>${gender}</h4>`;
+            for(const [type, names] of Object.entries(volunteers)) {
+                html += `<h4>${type}</h4>`;
                 html += names.map(name => `
-                    <div class="name-tag" onclick="toggleSelect(this)">
+                    <div class="name-tag 
+                        ${assignedPeople.includes(name) && !selectedNames.includes(name) ? 'assigned' : ''}
+                        ${selectedNames.includes(name) ? 'selected' : ''}"
+                        onclick="${assignedPeople.includes(name) && !selectedNames.includes(name) ? 
+                            'alert("이미 배정됨!")' : 'toggleSelect(this)"'}>
                         ${name}
                     </div>
                 `).join('');
-                html += '</div>';
             }
             document.getElementById('nameContainer').innerHTML = html;
         }
 
-        function toggleSelect(element) {
-            element.classList.toggle('selected');
-            const name = element.textContent.trim();
-            if (selectedNames.includes(name)) {
-                selectedNames = selectedNames.filter(n => n !== name);
-            } else {
-                selectedNames.push(name);
+        // 선택 토글
+        function toggleSelect(btn) {
+            const name = btn.innerText;
+            btn.classList.toggle('selected');
+            selectedNames = selectedNames.includes(name) ? 
+                selectedNames.filter(n => n !== name) : 
+                [...selectedNames, name];
+            updateSelectedDisplay();
+        }
+
+        // 선택 상태 업데이트
+        function updateSelectedDisplay() {
+            document.getElementById('selectedNames').innerHTML = selectedNames.join(', ') || "선택된 인원 없음";
+            document.getElementById('selectedCount').textContent = selectedNames.length;
+        }
+
+        // 직접 추가
+        function addCustomPerson() {
+            const name = prompt("추가할 이름 입력");
+            if(name) {
+                volunteers.기타.push(name);
+                renderNames();
+                filterNames();
             }
         }
 
+        // 검색 필터
         function filterNames() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const term = document.getElementById('searchInput').value.toLowerCase();
             document.querySelectorAll('.name-tag').forEach(tag => {
-                const name = tag.textContent.toLowerCase();
-                tag.style.display = name.includes(searchTerm) ? 'inline-block' : 'none';
+                tag.style.display = tag.innerText.toLowerCase().includes(term) ? 'inline-block' : 'none';
             });
         }
 
+        // 배정 완료
         function confirmAssignment() {
-            const resultDiv = document.getElementById(`result-${currentZone}`);
-            resultDiv.innerHTML = `
-                <div style="margin-top:10px; color:#666;">
-                    ▶ 배정 인원: ${selectedNames.join(', ')}
-                </div>
-            `;
+            assignedPeople = assignedPeople.filter(n => !assignments[currentZone]?.includes(n));
+            assignedPeople.push(...selectedNames);
+            assignments[currentZone] = selectedNames;
+            
+            document.querySelector(`#result-${currentZone}`).innerHTML = 
+                selectedNames.join(', ') || "배정 인원 없음";
             closeModal();
+            updateBadges();
+        }
+
+        // 배지 업데이트
+        function updateBadges() {
+            document.querySelectorAll('.edit-badge').forEach(badge => {
+                const zone = badge.parentElement.querySelector('h4').textContent.split(' ')[1];
+                badge.textContent = `${assignments[zone]?.length || 0}명`;
+            });
         }
 
         function closeModal() {
             document.getElementById('assignModal').style.display = 'none';
             selectedNames = [];
             document.getElementById('searchInput').value = '';
-            document.querySelectorAll('.name-tag.selected').forEach(tag => {
-                tag.classList.remove('selected');
-            });
         }
     </script>
+<!-- 기존 코드에 추가해야 할 부분 -->
+
+<!-- HTML 추가 (body 끝부분 전) -->
+<button onclick="showSummary()" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+    📷 전체 요약 보기
+</button>
+
+<div id="summaryModal" class="summary-modal">
+    <div class="summary-content">
+        <span class="close-summary" onclick="closeSummary()">&times;</span>
+        <h2>전체 배정 현황</h2>
+        <table id="summaryTable">
+            <thead>
+                <tr>
+                    <th>구역 번호</th>
+                    <th>배정 인원</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    /* CSS 추가 */
+    .summary-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: white;
+        z-index: 2000;
+        overflow: auto;
+    }
+
+    .summary-content {
+        padding: 40px;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .close-summary {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        font-size: 30px;
+        cursor: pointer;
+        color: #ff4444;
+    }
+
+    #summaryTable {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    #summaryTable th,
+    #summaryTable td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+    }
+
+    #summaryTable th {
+        background-color: #007AFF;
+        color: white;
+    }
+
+    #summaryTable tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+</style>
+
+<script>
+    // JavaScript 추가
+    function showSummary() {
+        const modal = document.getElementById('summaryModal');
+        const tbody = document.querySelector('#summaryTable tbody');
+        tbody.innerHTML = '';
+
+        // 테이블 데이터 생성
+        for(const [zone, members] of Object.entries(assignments)) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${zone}번</td>
+                <td>${members.join(', ')}</td>
+            `;
+            tbody.appendChild(row);
+        }
+
+        modal.style.display = 'block';
+    }
+
+    function closeSummary() {
+        document.getElementById('summaryModal').style.display = 'none';
+    }
+</script>
 </body>
 </html>

@@ -2,104 +2,176 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <!-- 아이폰 12 Pro 뷰포트 최적화 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-    <title>아이폰 할 일 목록</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자유 배정 프로그램</title>
     <style>
-        /* iOS 스타일 디자인 */
         body {
             font-family: -apple-system, BlinkMacSystemFont;
-            background: #000;
-            color: #fff;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
             margin: 0;
-        }
-
-        .container {
-            max-width: 390px; /* 아이폰 12 Pro 너비 기준 */
-            margin: 0 auto;
             padding: 20px;
+            background: #f5f5f7;
         }
-
-        #taskInput {
-            width: 100%;
-            padding: 14px;
-            font-size: 16px;
-            border: 1px solid #3a3a3c;
-            border-radius: 10px;
-            background: #1c1c1e;
-            color: white;
-            margin-bottom: 15px;
+        .zone-list {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 30px;
         }
-
-        .addBtn {
-            width: 100%;
-            padding: 14px;
-            background: #0a84ff;
-            color: white;
-            border: none;
+        .zone-item {
+            background: white;
+            padding: 15px;
             border-radius: 10px;
-            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+        .name-tag {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 1px solid #e0e0e0;
             cursor: pointer;
+            transition: 0.2s;
         }
-
-        #taskList {
-            list-style: none;
-            padding: 0;
+        .name-tag.selected {
+            background: #007AFF;
+            color: white;
+            border-color: #007AFF;
         }
-
-        .taskItem {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        #searchInput {
+            width: 100%;
             padding: 12px;
-            background: #1c1c1e;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
             border-radius: 8px;
-            margin-bottom: 8px;
         }
-
-        .deleteBtn {
-            background: #ff3b30;
+        button {
+            padding: 10px 20px;
+            background: #007AFF;
             color: white;
             border: none;
-            border-radius: 6px;
-            padding: 6px 12px;
+            border-radius: 8px;
             cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📱 할 일 관리</h1>
-        <input type="text" id="taskInput" placeholder="새로운 할 일 입력">
-        <button class="addBtn" onclick="addTask()">추가</button>
-        <ul id="taskList"></ul>
+    <button onclick="addZone()">+ 새 구역 추가</button>
+    <div class="zone-list" id="zoneList"></div>
+
+    <!-- 모달 창 -->
+    <div class="modal" id="assignModal">
+        <div class="modal-content">
+            <h3 id="modalTitle"></h3>
+            <input type="text" id="searchInput" placeholder="🔍 이름 검색" onkeyup="filterNames()">
+            <div id="nameContainer"></div>
+            <div style="margin-top: 20px;">
+                <button onclick="confirmAssignment()">완료</button>
+                <button onclick="closeModal()">취소</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // 할 일 추가 함수
-        function addTask() {
-            const input = document.getElementById('taskInput');
-            if (input.value.trim() === '') return;
+        const volunteers = {
+            남자: ["박상익","임편수","임종목","전진해","이종호","김상연","사영환","서기원","김인기","전필용","김기권","박희범","박희종","서정길","정종민","정해균","이목영","이선","이현석","박원준","김은석","박진걸","전종경","김철호","정순도","박종화","양재은","양진우","정진수"],
+            여자: ["강승미","강승희","권영미","김복실","서광옥","안영자","이가영","이명윤","이영자","임귀녀","임여진","조금순","조인순","최문숙","최연진","강성임","권영숙","김동임","김옥순A","김은희","김춘조","변현숙","용옥자","우옥희","이영재","이희숙","임순자","조명자","양동순","양지예","양지은","김경애","김인희","김정숙","민규희","박여자","시예지","유민지","유순지","이금자","이화숙","최명수","홍은희","박선아","권수진","문설형","박은숙","박현숙","백경자","송옥순","신부지","이금덕","이아영","이재희","임애진","홍명순","김영아","곽순호","김솔","김영순","김옥순B","박순례","이경현","이지애","이희열","임규환","장평원","정송은","정옥연","최건자","김귀자","김영애","김인순","김희재","손귀선","신연순","심자인","연선미","이경순","이미애","이병임","이애선","서혜경"],
+            자녀: ["이채은","양다솜","박시우"]
+        };
 
-            const li = document.createElement('li');
-            li.className = 'taskItem';
-            li.innerHTML = `
-                <span>${input.value}</span>
-                <button class="deleteBtn" onclick="this.parentElement.remove()">삭제</button>
+        let currentZone = null;
+        let selectedNames = [];
+
+        function addZone() {
+            const zoneNumber = prompt("구역 번호를 입력하세요 (1-268)");
+            if (!zoneNumber || isNaN(zoneNumber) || zoneNumber < 1 || zoneNumber > 268) {
+                alert("1-268 사이의 숫자를 입력해주세요");
+                return;
+            }
+
+            const zoneItem = document.createElement('div');
+            zoneItem.className = 'zone-item';
+            zoneItem.innerHTML = `
+                <h4>구역 ${zoneNumber}</h4>
+                <button onclick="openAssignModal(${zoneNumber})">인원 배정</button>
+                <div id="result-${zoneNumber}" class="result-area"></div>
             `;
-
-            document.getElementById('taskList').appendChild(li);
-            input.value = '';
-            
-            // iOS 햅틱 피드백 (진동)
-            if (window.navigator.vibrate) navigator.vibrate(10);
+            document.getElementById('zoneList').appendChild(zoneItem);
         }
 
-        // 엔터 키로 추가
-        document.getElementById('taskInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addTask();
-        });
+        function openAssignModal(zone) {
+            currentZone = zone;
+            document.getElementById('modalTitle').textContent = `구역 ${zone} 배정`;
+            document.getElementById('assignModal').style.display = 'block';
+            renderNames();
+        }
+
+        function renderNames() {
+            let html = '';
+            for (const [gender, names] of Object.entries(volunteers)) {
+                html += `<div class="gender-group"><h4>${gender}</h4>`;
+                html += names.map(name => `
+                    <div class="name-tag" onclick="toggleSelect(this)">
+                        ${name}
+                    </div>
+                `).join('');
+                html += '</div>';
+            }
+            document.getElementById('nameContainer').innerHTML = html;
+        }
+
+        function toggleSelect(element) {
+            element.classList.toggle('selected');
+            const name = element.textContent.trim();
+            if (selectedNames.includes(name)) {
+                selectedNames = selectedNames.filter(n => n !== name);
+            } else {
+                selectedNames.push(name);
+            }
+        }
+
+        function filterNames() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('.name-tag').forEach(tag => {
+                const name = tag.textContent.toLowerCase();
+                tag.style.display = name.includes(searchTerm) ? 'inline-block' : 'none';
+            });
+        }
+
+        function confirmAssignment() {
+            const resultDiv = document.getElementById(`result-${currentZone}`);
+            resultDiv.innerHTML = `
+                <div style="margin-top:10px; color:#666;">
+                    ▶ 배정 인원: ${selectedNames.join(', ')}
+                </div>
+            `;
+            closeModal();
+        }
+
+        function closeModal() {
+            document.getElementById('assignModal').style.display = 'none';
+            selectedNames = [];
+            document.getElementById('searchInput').value = '';
+            document.querySelectorAll('.name-tag.selected').forEach(tag => {
+                tag.classList.remove('selected');
+            });
+        }
     </script>
 </body>
 </html>

@@ -176,6 +176,48 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             z-index: 1000;
         }
+        .zones-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 2000;
+            overflow: auto;
+        }
+        .zones-content {
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .close-zones {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-size: 30px;
+            cursor: pointer;
+            color: #ff4444;
+        }
+        #zonesTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #zonesTable th,
+        #zonesTable td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        #zonesTable th {
+            background-color: #007AFF;
+            color: white;
+        }
+        #zonesTable tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
     </style>
 </head>
 <body>
@@ -204,7 +246,7 @@
     <!-- 부가 기능 영역 -->
     <div class="history-controls">
         <input type="date" id="historyDate">
-        <button onclick="loadHistory()">📅 기록 불러오기</button>
+        <button onclick="showZonesList()">📅 기록 불러오기</button>
     </div>
 
     <!-- 요약 화면 -->
@@ -215,6 +257,20 @@
             <table id="summaryTable">
                 <thead>
                     <tr><th>구역</th><th>인원</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 구역 목록 모달 -->
+    <div id="zonesModal" class="zones-modal">
+        <div class="zones-content">
+            <span class="close-zones" onclick="closeZones()">×</span>
+            <h2>구역 목록</h2>
+            <table id="zonesTable">
+                <thead>
+                    <tr><th>구역 번호</th><th>구역 명</th><th>최근 봉사 날짜</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -382,21 +438,42 @@
             closeModal();
         }
 
-        // 기록 불러오기
-        async function loadHistory() {
-            const date = document.getElementById('historyDate').value;
-            const doc = await db.collection('history').doc(date).get();
-            
-            if(doc.exists) {
-                assignments = doc.data().zones;
-                assignedPeople = [].concat(...Object.values(assignments));
-            } else {
-                assignments = {};
-                assignedPeople = [];
+        // 구역 목록 표시
+        async function showZonesList() {
+            const modal = document.getElementById('zonesModal');
+            const tbody = document.querySelector('#zonesTable tbody');
+            tbody.innerHTML = '';
+
+            const historySnapshot = await db.collection('history')
+                .orderBy('timestamp', 'desc')
+                .get();
+
+            const latestDates = {};
+            historySnapshot.forEach(doc => {
+                const date = doc.id;
+                const zones = doc.data().zones || {};
+                Object.keys(zones).forEach(zone => {
+                    if (!latestDates[zone] || latestDates[zone] < date) {
+                        latestDates[zone] = date;
+                    }
+                });
+            });
+
+            for (const [zone, name] of Object.entries(zoneData)) {
+                const row = document.createElement('tr');
+                const latestDate = latestDates[zone] || '기록 없음';
+                row.innerHTML = `<td>${zone}</td><td>${name}</td><td>${latestDate}</td>`;
+                tbody.appendChild(row);
             }
-            initZones();
-            updateUIState();
+
+            modal.style.display = 'block';
         }
+
+        // 구역 목록 모달 닫기
+        function closeZones() {
+            document.getElementById('zonesModal').style.display = 'none';
+        }
+
         function showMap() {
             document.getElementById('mapModal').style.display = 'block';
         }
@@ -489,6 +566,14 @@
                 closeModal();
             }
         });
+
+        // 구역 목록 모달 외부 클릭 닫기
+        document.getElementById('zonesModal').addEventListener('click', (e) => {
+            if(e.target === document.getElementById('zonesModal')) {
+                closeZones();
+            }
+        });
+
         // 구역 정보 데이터
     const zoneData = {
     1: "정정란 미용실",
@@ -680,6 +765,22 @@ for(let i=176; i<=268; i++) {
             집단: ["동부집단","서부집단","남부집단","북부집단","연서집단","연신내집단"],
             기타: []
         };
+
+        // 기록 불러오기
+        async function loadHistory() {
+            const date = document.getElementById('historyDate').value;
+            const doc = await db.collection('history').doc(date).get();
+            
+            if(doc.exists) {
+                assignments = doc.data().zones;
+                assignedPeople = [].concat(...Object.values(assignments));
+            } else {
+                assignments = {};
+                assignedPeople = [];
+            }
+            initZones();
+            updateUIState();
+        }
     </script>
 </body>
 </html>

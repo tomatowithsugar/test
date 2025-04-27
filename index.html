@@ -13,6 +13,12 @@
             background: #f5f5f7;
         }
         h1 { color: #007AFF; margin-bottom: 25px; }
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
         .zone-list { gap: 15px; margin: 20px 0; }
         .zone-item {
             background: white;
@@ -135,9 +141,6 @@
             background-color: #f9f9f9;
         }
         .history-controls {
-            position: fixed;
-            top: 90px;
-            left: 150px;
             background: white;
             padding: 10px;
             border-radius: 10px;
@@ -151,7 +154,13 @@
 </head>
 <body>
     <h1>구역배정 프로그램</h1>
-    <button onclick="addZone()">+ 새 구역 추가</button>
+    <div class="controls">
+        <button onclick="addZone()">+ 새 구역 추가</button>
+        <div class="history-controls">
+            <input type="date" id="historyDate">
+            <button onclick="loadHistory()">📅 기록 불러오기</button>
+        </div>
+    </div>
     <div class="zone-list" id="zoneList"></div>
 
     <!-- 모달 -->
@@ -172,16 +181,10 @@
         </div>
     </div>
 
-    <!-- 부가 기능 영역 -->
-    <div class="history-controls">
-        <input type="date" id="historyDate">
-        <button onclick="loadHistory()">📅 기록 불러오기</button>
-    </div>
-
     <!-- 요약 화면 -->
     <div id="summaryModal" class="summary-modal">
         <div class="summary-content">
-            <span class="close-summary" onclick="closeSummary()">&times;</span>
+            <span class="close-summary" onclick="closeSummary()">×</span>
             <h2>전체 배정 현황</h2>
             <table id="summaryTable">
                 <thead>
@@ -402,7 +405,6 @@
             document.getElementById('summaryModal').style.display = 'none';
         }
 
-       
         // 모달 외부 클릭 닫기
         document.getElementById('assignModal').addEventListener('click', (e) => {
             if(e.target === document.getElementById('assignModal')) {
@@ -415,6 +417,7 @@
             형제: ["박상익","임현수","임종목","전진해","이종호","김상연","사영환","서기원","김인기","전필용","김기권","박희범","박희종","서정길","정종민","정해균","이목영","이선","이현석","박원준","김은석","박진걸","전종경","김철호","정순도","박종화","양재은","양진우","정진수"],
             자매: ["강승미","강승희","권영미","김복실","서광옥","안영자","이가영","이명윤","이영자","임귀녀","임여진","조금순","조인순","최문숙","최연진","강성임","권영숙","김동임","김옥순A","김은희","김춘조","변현숙","용옥자","우옥희","이영재","이희숙","임순자","조명자","양동순","양지예","양지은","김경애","김인희","김정숙","민규희","박여자","시예지","유민지","유순지","이금자","이화숙","최명수","홍은희","박선아","권수진","문설형","박은숙","박현숙","백경자","송옥순","신부지","이금덕","이아영","이재희","임애진","홍명순","김영아","곽순호","김솔","김영순","김옥순B","박순례","이경현","이지애","이희열","임규환","장평원","정송은","정옥연","최건자","김귀자","김영애","김인순","김희재","손귀선","신연순","심자인","연선미","이경순","이미애","이병임","이애선","서혜경"],
             자녀: ["이채은","양다솜","박시우"],
+            집단: ["동부집단","서부집단","남부집단","북부집단","연서집단","연신내집단"],
             기타: []
         };
     </script>

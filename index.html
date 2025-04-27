@@ -223,7 +223,19 @@
 
     <!-- 요약 버튼 -->
     <div class="summary-button" onclick="showSummary()">요약 보기</div>
-
+    <div class="modal" id="mapModal">
+        <div class="modal-content" style="height:85vh;">
+            <button class="delete-btn" onclick="closeMap()" style="position:absolute; right:15px; top:15px;">닫기</button>
+            <h3>구역 1 지도</h3>
+            <iframe 
+                src="https://www.google.com/maps/d/embed?mid=1bYOTo09R4lpFllZCBoz8rIS3wvMzX3Y&ehbc=2E312F" 
+                width="100%" 
+                height="90%"
+                style="border:0; border-radius:8px; margin-top:15px;"
+                allowfullscreen>
+            </iframe>
+        </div>
+    </div>
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
@@ -384,6 +396,20 @@
             initZones();
             updateUIState();
         }
+        function showMap() {
+            document.getElementById('mapModal').style.display = 'block';
+        }
+
+        function closeMap() {
+            document.getElementById('mapModal').style.display = 'none';
+        }
+
+        // [추가] 모달 외부 클릭 닫기
+        document.getElementById('mapModal').addEventListener('click', (e) => {
+            if(e.target === document.getElementById('mapModal')) {
+                closeMap();
+            }
+        });
 
         // 구역 초기화
         function initZones() {
@@ -395,6 +421,7 @@
                         <span class="edit-badge">${assignments[zone].length}명</span>
                         <div class="buttons">
                             <button onclick="openAssignModal(${zone})">인원배정</button>
+                            ${zone === '1' ? '<button onclick="showMap()" style="background:#34C759;">지도보기</button>' : ''}
                             <button class="delete-btn" onclick="deleteZone(${zone})">삭제</button>
                         </div>
                         <div id="result-${zone}">${assignments[zone].join(', ')}</div>

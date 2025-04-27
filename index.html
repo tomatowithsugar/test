@@ -159,6 +159,9 @@
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             z-index: 1000;
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
         button:disabled {
             background: #ddd !important;
@@ -221,6 +224,9 @@
         #zonesTable tr.highlight {
             background-color: #FFFF99 !important;
         }
+        .edit-mode-btn {
+            background: #FF9500 !important;
+        }
     </style>
 </head>
 <body>
@@ -250,6 +256,7 @@
     <div class="history-controls">
         <input type="date" id="historyDate">
         <button onclick="showZonesList()">📅 기록 불러오기</button>
+        <button class="edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()">수정 모드</button>
     </div>
 
     <!-- 요약 화면 -->
@@ -320,15 +327,41 @@
         let selectedNames = [];
         let assignedPeople = [];
         let assignments = {};
+        let isEditMode = false; // 수정 모드 상태
 
-        // 편집 가능 날짜 체크
+        // 편집 가능 여부 체크
         function isEditableDate() {
+            if (isEditMode) return true; // 수정 모드에서는 편집 가능
             const now = new Date();
             const tzOffset = now.getTimezoneOffset() * 60000;
             const today = new Date(now - tzOffset).toISOString().split('T')[0];
             const selectedDate = document.getElementById('historyDate').value;
             console.log('isEditableDate - 오늘:', today, '선택된 날짜:', selectedDate, '편집 가능:', selectedDate >= today);
             return selectedDate >= today;
+        }
+
+        // 수정 모드 토글
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const editBtn = document.getElementById('editModeBtn');
+            editBtn.textContent = isEditMode ? '읽기 모드' : '수정 모드';
+            editBtn.style.background = isEditMode ? '#FF3B30' : '#FF9500';
+            updateUIState();
+            console.log('toggleEditMode - 수정 모드:', isEditMode);
+        }
+
+        // 수정 모드 버튼 표시/숨김
+        function updateEditModeButtonVisibility() {
+            const now = new Date();
+            const tzOffset = now.getTimezoneOffset() * 60000;
+            const today = new Date(now - tzOffset).toISOString().split('T')[0];
+            const selectedDate = document.getElementById('historyDate').value;
+            const editBtn = document.getElementById('editModeBtn');
+            editBtn.style.display = selectedDate < today ? 'inline-block' : 'none';
+            if (selectedDate >= today) {
+                isEditMode = false; // 현재/미래 날짜에서는 수정 모드 비활성화
+            }
+            console.log('updateEditModeButtonVisibility - 선택된 날짜:', selectedDate, '오늘:', today, '버튼 표시:', editBtn.style.display);
         }
 
         // UI 상태 업데이트
@@ -359,11 +392,13 @@
             dateInput.addEventListener('change', async () => {
                 console.log('historyDate 변경:', dateInput.value);
                 await loadHistory();
+                updateEditModeButtonVisibility();
                 updateUIState();
             });
             
             // 초기 데이터 로드
             await loadHistory();
+            updateEditModeButtonVisibility();
             updateUIState();
         });
 

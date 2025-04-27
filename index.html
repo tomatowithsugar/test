@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>구역배정</title>
+    <title>구역배정 최종</title>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -92,24 +92,73 @@
             flex-grow: 1;
             padding: 10px 0;
         }
+        .summary-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 2000;
+            overflow: auto;
+        }
+        .summary-content {
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .close-summary {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-size: 30px;
+            cursor: pointer;
+            color: #ff4444;
+        }
+        #summaryTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #summaryTable th,
+        #summaryTable td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        #summaryTable th {
+            background-color: #007AFF;
+            color: white;
+        }
+        #summaryTable tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .history-controls {
+            position: fixed;
+            bottom: 150px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
-    <h1>구역배정 프로그램</h1>
+    <h1>⛪ 구역배정 프로그램</h1>
     <button onclick="addZone()">+ 새 구역 추가</button>
     <div class="zone-list" id="zoneList"></div>
 
+    <!-- 모달 -->
     <div class="modal" id="assignModal">
         <div class="modal-content">
             <h3 id="modalTitle"></h3>
             <input type="text" id="searchInput" placeholder="🔍 이름 검색" onkeyup="filterNames()">
-            
-            <!-- 선택 인원 표시 영역 -->
             <div class="selected-area">
                 <h4>선택한 인원 (<span id="selectedCount">0</span>명)</h4>
                 <div id="selectedNames"></div>
             </div>
-
             <div id="nameContainer"></div>
             <button class="add-custom-btn" onclick="addCustomPerson()">+ 직접 추가</button>
             <div style="margin-top:20px;">
@@ -119,32 +168,72 @@
         </div>
     </div>
 
+    <!-- 부가 기능 영역 -->
+    <div class="history-controls">
+        <input type="date" id="historyDate">
+        <button onclick="loadHistory()">📅 기록 불러오기</button>
+        <button onclick="shareData()" style="margin-top:10px;">🔗 링크 공유</button>
+    </div>
+
+    <!-- 요약 화면 -->
+    <div id="summaryModal" class="summary-modal">
+        <div class="summary-content">
+            <span class="close-summary" onclick="closeSummary()">&times;</span>
+            <h2>전체 배정 현황</h2>
+            <table id="summaryTable">
+                <thead>
+                    <tr><th>구역</th><th>인원</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
     <script>
-        const volunteers = {
-            형제: ["박상익","임현수","임종목","전진해","이종호","김상연","사영환","서기원","김인기","전필용","김기권","박희범","박희종","서정길","정종민","정해균","이목영","이선","이현석","박원준","김은석","박진걸","전종경","김철호","정순도","박종화","양재은","양진우","정진수"],
-            자매: ["강승미","강승희","권영미","김복실","서광옥","안영자","이가영","이명윤","이영자","임귀녀","임여진","조금순","조인순","최문숙","최연진","강성임","권영숙","김동임","김옥순A","김은희","김춘조","변현숙","용옥자","우옥희","이영재","이희숙","임순자","조명자","양동순","양지예","양지은","김경애","김인희","김정숙","민규희","박여자","시예지","유민지","유순지","이금자","이화숙","최명수","홍은희","박선아","권수진","문설형","박은숙","박현숙","백경자","송옥순","신부지","이금덕","이아영","이재희","임애진","홍명순","김영아","곽순호","김솔","김영순","김옥순B","박순례","이경현","이지애","이희열","임규환","장평원","정송은","정옥연","최건자","김귀자","김영애","김인순","김희재","손귀선","신연순","심자인","연선미","이경순","이미애","이병임","이애선","서혜경"],
-            자녀: ["이채은","양다솜","박시우"],
-            기타: []
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyCv5Za0pq9okmTgorjPuZHiJIhkgAieVPY",
+            authDomain: "assignment-1bf57.firebaseapp.com",
+            projectId: "assignment-1bf57",
+            storageBucket: "assignment-1bf57.firebasestorage.app",
+            messagingSenderId: "609185997879",
+            appId: "1:609185997879:web:e1932a4a1e959c1b088bb2",
+            measurementId: "G-TEP0FST75C"
         };
 
+        // 초기화
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // 데이터 구조
         let currentZone = null;
         let selectedNames = [];
         let assignedPeople = [];
         let assignments = {};
 
+        // 초기 로드
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const date = urlParams.get('date') || new Date().toISOString().split('T')[0];
+            document.getElementById('historyDate').value = date;
+            await loadHistory();
+        });
+
         // 구역 추가
         function addZone() {
             const zone = prompt("구역 번호 입력 (1-268)");
             if(!zone || zone < 1 || zone > 268) return alert("1-268 사이 숫자 입력");
-            
             document.getElementById('zoneList').innerHTML += `
                 <div class="zone-item">
                     <h4>구역 ${zone}</h4>
-                    <span class="edit-badge">${assignments[zone]?.length || 0}명</span>
+                    <span class="edit-badge">0명</span>
                     <button onclick="openAssignModal(${zone})">인원배정</button>
                     <div id="result-${zone}"></div>
-                </div>
-            `;
+                </div>`;
         }
 
         // 모달 열기
@@ -209,16 +298,50 @@
             });
         }
 
-        // 배정 완료
-        function confirmAssignment() {
+        // 데이터 저장
+        async function confirmAssignment() {
             assignedPeople = assignedPeople.filter(n => !assignments[currentZone]?.includes(n));
             assignedPeople.push(...selectedNames);
             assignments[currentZone] = selectedNames;
-            
-            document.querySelector(`#result-${currentZone}`).innerHTML = 
-                selectedNames.join(', ') || "배정 인원 없음";
-            closeModal();
+
+            const date = document.getElementById('historyDate').value;
+            await db.collection('history').doc(date).set({
+                zones: assignments,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
             updateBadges();
+            closeModal();
+        }
+
+        // 기록 불러오기
+        async function loadHistory() {
+            const date = document.getElementById('historyDate').value;
+            const doc = await db.collection('history').doc(date).get();
+            
+            if(doc.exists) {
+                assignments = doc.data().zones;
+                assignedPeople = [].concat(...Object.values(assignments));
+                initZones();
+            } else {
+                assignments = {};
+                assignedPeople = [];
+                initZones();
+            }
+        }
+
+        // 구역 초기화
+        function initZones() {
+            document.getElementById('zoneList').innerHTML = '';
+            for(const zone in assignments) {
+                document.getElementById('zoneList').innerHTML += `
+                    <div class="zone-item">
+                        <h4>구역 ${zone}</h4>
+                        <span class="edit-badge">${assignments[zone].length}명</span>
+                        <button onclick="openAssignModal(${zone})">인원배정</button>
+                        <div id="result-${zone}">${assignments[zone].join(', ')}</div>
+                    </div>`;
+            }
         }
 
         // 배지 업데이트
@@ -229,110 +352,54 @@
             });
         }
 
+        // 모달 닫기
         function closeModal() {
             document.getElementById('assignModal').style.display = 'none';
             selectedNames = [];
             document.getElementById('searchInput').value = '';
         }
-    </script>
-<!-- 기존 코드에 추가해야 할 부분 -->
 
-<!-- HTML 추가 (body 끝부분 전) -->
-<button onclick="showSummary()" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
-    전체 요약
-</button>
+        // 요약 화면
+        function showSummary() {
+            const modal = document.getElementById('summaryModal');
+            const tbody = document.querySelector('#summaryTable tbody');
+            tbody.innerHTML = '';
 
-<div id="summaryModal" class="summary-modal">
-    <div class="summary-content">
-        <span class="close-summary" onclick="closeSummary()">&times;</span>
-        <h2>전체 배정 현황</h2>
-        <table id="summaryTable">
-            <thead>
-                <tr>
-                    <th>구역 번호</th>
-                    <th>배정 인원</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-</div>
-
-<style>
-    /* CSS 추가 */
-    .summary-modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: white;
-        z-index: 2000;
-        overflow: auto;
-    }
-
-    .summary-content {
-        padding: 40px;
-        max-width: 800px;
-        margin: 0 auto;
-    }
-
-    .close-summary {
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        font-size: 30px;
-        cursor: pointer;
-        color: #ff4444;
-    }
-
-    #summaryTable {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-    }
-
-    #summaryTable th,
-    #summaryTable td {
-        border: 1px solid #ddd;
-        padding: 12px;
-        text-align: left;
-    }
-
-    #summaryTable th {
-        background-color: #007AFF;
-        color: white;
-    }
-
-    #summaryTable tr:nth-child(even) {
-        background-color: #f9f9f9;
-    }
-</style>
-
-<script>
-    // JavaScript 추가
-    function showSummary() {
-        const modal = document.getElementById('summaryModal');
-        const tbody = document.querySelector('#summaryTable tbody');
-        tbody.innerHTML = '';
-
-        // 테이블 데이터 생성
-        for(const [zone, members] of Object.entries(assignments)) {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${zone}번</td>
-                <td>${members.join(', ')}</td>
-            `;
-            tbody.appendChild(row);
+            for(const [zone, members] of Object.entries(assignments)) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${zone}번</td><td>${members.join(', ')}</td>`;
+                tbody.appendChild(row);
+            }
+            modal.style.display = 'block';
         }
 
-        modal.style.display = 'block';
-    }
+        // 요약 닫기
+        function closeSummary() {
+            document.getElementById('summaryModal').style.display = 'none';
+        }
 
-    function closeSummary() {
-        document.getElementById('summaryModal').style.display = 'none';
-    }
-</script>
+        // 공유 기능
+        function shareData() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                alert("링크 복사 완료!\n이 링크를 공유하세요.");
+            });
+        }
+
+        // 모달 외부 클릭 닫기
+        document.getElementById('assignModal').addEventListener('click', (e) => {
+            if(e.target === document.getElementById('assignModal')) {
+                closeModal();
+            }
+        });
+
+        // 자원봉사자 데이터
+        const volunteers = {
+            형제: ["박상익","임현수","임종목","전진해","이종호","김상연","사영환","서기원","김인기","전필용","김기권","박희범","박희종","서정길","정종민","정해균","이목영","이선","이현석","박원준","김은석","박진걸","전종경","김철호","정순도","박종화","양재은","양진우","정진수"],
+            자매: ["강승미","강승희","권영미","김복실","서광옥","안영자","이가영","이명윤","이영자","임귀녀","임여진","조금순","조인순","최문숙","최연진","강성임","권영숙","김동임","김옥순A","김은희","김춘조","변현숙","용옥자","우옥희","이영재","이희숙","임순자","조명자","양동순","양지예","양지은","김경애","김인희","김정숙","민규희","박여자","시예지","유민지","유순지","이금자","이화숙","최명수","홍은희","박선아","권수진","문설형","박은숙","박현숙","백경자","송옥순","신부지","이금덕","이아영","이재희","임애진","홍명순","김영아","곽순호","김솔","김영순","김옥순B","박순례","이경현","이지애","이희열","임규환","장평원","정송은","정옥연","최건자","김귀자","김영애","김인순","김희재","손귀선","신연순","심자인","연선미","이경순","이미애","이병임","이애선","서혜경"],
+            자녀: ["이채은","양다솜","박시우"],
+            기타: []
+        };
+    </script>
 </body>
 </html>

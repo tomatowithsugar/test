@@ -176,7 +176,6 @@
     <div class="history-controls">
         <input type="date" id="historyDate">
         <button onclick="loadHistory()">📅 기록 불러오기</button>
-        <button onclick="shareData()" style="margin-top:10px;">🔗 링크 공유</button>
     </div>
 
     <!-- 요약 화면 -->
@@ -403,14 +402,7 @@
             document.getElementById('summaryModal').style.display = 'none';
         }
 
-        // 공유 기능
-        function shareData() {
-            const url = `${window.location.href.split('?')[0]}?date=${document.getElementById('historyDate').value}`;
-            navigator.clipboard.writeText(url).then(() => {
-                alert("링크 복사 완료!\n이 링크를 공유하세요.");
-            });
-        }
-
+       
         // 모달 외부 클릭 닫기
         document.getElementById('assignModal').addEventListener('click', (e) => {
             if(e.target === document.getElementById('assignModal')) {

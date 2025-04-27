@@ -249,7 +249,7 @@
     <!-- 부가 기능 영역 -->
     <div class="history-controls">
         <input type="date" id="historyDate">
-        <button onclick="showZonesList()">📅 봉사기록</button>
+	<button onclick="showZonesList()">📅 기록 불러오기</button>
     </div>
 
     <!-- 요약 화면 -->
@@ -323,31 +323,45 @@
 
         // 편집 가능 날짜 체크
         function isEditableDate() {
-            const today = new Date().toISOString().split('T')[0];
-            return document.getElementById('historyDate').value === today;
-        }
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    const today = new Date(now - tzOffset).toISOString().split('T')[0];
+    const selectedDate = document.getElementById('historyDate').value;
+    return selectedDate === today;
+}
 
         // UI 상태 업데이트
         function updateUIState() {
-            const editable = isEditableDate();
-            document.querySelector('button[onclick="addZone()"]').disabled = !editable;
-            document.querySelectorAll('.zone-item button').forEach(btn => {
-                btn.disabled = !editable;
-            });
+    const editable = isEditableDate();
+    document.querySelector('button[onclick="addZone()"]').disabled = !editable;
+    document.querySelectorAll('.zone-item button').forEach(btn => {
+        if(btn.innerText !== '지도보기') { // 지도보기 버튼은 예외
+            btn.disabled = !editable;
         }
+    });
+}
 
         // 초기 로드
         document.addEventListener('DOMContentLoaded', async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const date = urlParams.get('date') || new Date().toISOString().split('T')[0];
-            document.getElementById('historyDate').value = date;
-            
-            document.getElementById('historyDate').addEventListener('change', async () => {
-                await loadHistory();
-            });
-            
-            await loadHistory();
-        });
+    // 현지 시간 기준 오늘 날짜 계산
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    const today = new Date(now - tzOffset).toISOString().split('T')[0];
+    
+    // 날짜 입력 필드 초기화
+    const dateInput = document.getElementById('historyDate');
+    dateInput.value = today;
+    
+    // 이벤트 리스너 추가
+    dateInput.addEventListener('change', async () => {
+        await loadHistory();
+        updateUIState();
+    });
+    
+    // 초기 데이터 로드
+    await loadHistory();
+    updateUIState();
+});
 
         // 구역 추가
         function addZone() {
@@ -442,7 +456,6 @@
         }
 
         // 구역 목록 표시
-        // 구역 목록 표시
         async function showZonesList() {
             const modal = document.getElementById('zonesModal');
             const tbody = document.querySelector('#zonesTable tbody');
@@ -461,36 +474,36 @@
                 Object.keys(zones).forEach(zone => {
                     if (!latestDates[zone] || latestDates[zone] < date) {
                         latestDates[zone] = date;
+                    }
+                });
+            });
+
+            const today = new Date().toISOString().split('T')[0];
+            const closestDate = allDates
+                .filter(date => date <= today)
+                .sort((a, b) => new Date(b) - new Date(a))[0] || '기록 없음';
+
+            let lastHighlightedRow = null;
+            for (const [zone, name] of Object.entries(zoneData)) {
+                const row = document.createElement('tr');
+                const latestDate = latestDates[zone] || '기록 없음';
+                const isClosest = latestDate === closestDate && latestDate !== '기록 없음';
+                if (isClosest) {
+                    row.classList.add('highlight');
+                    lastHighlightedRow = row;
+                }
+                row.innerHTML = `<td>${zone}</td><td>${name}</td><td>${latestDate}</td>`;
+                tbody.appendChild(row);
             }
-        });
-    });
 
-    const today = new Date().toISOString().split('T')[0];
-    const closestDate = allDates
-        .filter(date => date <= today)
-        .sort((a, b) => new Date(b) - new Date(a))[0] || '기록 없음';
+            modal.style.display = 'block';
 
-    let lastHighlightedRow = null;
-    for (const [zone, name] of Object.entries(zoneData)) {
-        const row = document.createElement('tr');
-        const latestDate = latestDates[zone] || '기록 없음';
-        const isClosest = latestDate === closestDate && latestDate !== '기록 없음';
-        if (isClosest) {
-            row.classList.add('highlight');
-            lastHighlightedRow = row; // Update to the latest highlighted row
+            if (lastHighlightedRow) {
+                setTimeout(() => {
+                    lastHighlightedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 0);
+            }
         }
-        row.innerHTML = `<td>${zone}</td><td>${name}</td><td>${latestDate}</td>`;
-        tbody.appendChild(row);
-    }
-
-    modal.style.display = 'block';
-
-    if (lastHighlightedRow) {
-        setTimeout(() => {
-            lastHighlightedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 0);
-    }
-}
 
         // 구역 목록 모달 닫기
         function closeZones() {
@@ -620,7 +633,7 @@
             19: "보령주택(좌측)",
             20: "송광맨션(우측)",
             21: "청명대",
-            22: "살렘교회",
+            22: "살렴교회",
             23: "연신시티, 공영주차장옆",
             24: "UN빌라",
             25: "(구)연신마트 -> 이마트24 편의점",
@@ -669,7 +682,7 @@
             68: "진양빌라",
             69: "우리동네키움센터(구 YBM)",
             70: "건우빌라",
-            71: "불광 어린이집",
+            71: "불광2 어린이집",
             72: "연천초등학교",
             73: "이화마트",
             74: "창덕주택",
@@ -792,6 +805,7 @@
         // 기록 불러오기
         async function loadHistory() {
             const date = document.getElementById('historyDate').value;
+            console.log('loadHistory - 데이터 가져오기 날짜:', date);
             const doc = await db.collection('history').doc(date).get();
             
             if(doc.exists) {
@@ -802,7 +816,6 @@
                 assignedPeople = [];
             }
             initZones();
-            updateUIState();
         }
     </script>
 </body>

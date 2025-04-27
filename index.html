@@ -514,53 +514,57 @@
 
         // 구역 목록 표시
         async function showZonesList() {
-            const modal = document.getElementById('zonesModal');
-            const tbody = document.querySelector('#zonesTable tbody');
-            tbody.innerHTML = '';
+  // 1) 모달과 tbody 가져오기
+  const modal = document.getElementById('zonesModal');
+  const tbody = document.querySelector('#zonesTable tbody');
+  tbody.innerHTML = '';
 
-            const historySnapshot = await db.collection('history')
-                .orderBy('timestamp', 'desc')
-                .get();
+  // 2) 가장 최신 문서 순으로 가져오기
+  const historySnapshot = await db.collection('history')
+    .orderBy('timestamp', 'desc')
+    .get();
 
-            const latestDates = {};
-            const allDates = [];
-            historySnapshot.forEach(doc => {
-                const date = doc.id;
-                allDates.push(date);
-                const zones = doc.data().zones || {};
-                Object.keys(zones).forEach(zone => {
-                    if (!latestDates[zone] || latestDates[zone] < date) {
-                        latestDates[zone] = date;
-                    }
-                });
-            });
+  // 3) 전체 최신 날짜 (문서 ID) 추출
+  const latestRecordedDate = historySnapshot.docs.length
+    ? historySnapshot.docs[0].id
+    : null;
 
-            const today = new Date().toISOString().split('T')[0];
-            const closestDate = allDates
-                .filter(date => date <= today)
-                .sort((a, b) => new Date(b) - new Date(a))[0] || '기록 없음';
+  // 4) zone별로 최신 날짜 계산
+  const latestDates = {};
+  historySnapshot.forEach(doc => {
+    const date = doc.id;
+    const zones = doc.data().zones || {};
+    Object.keys(zones).forEach(zone => {
+      if (!latestDates[zone] || new Date(latestDates[zone]) < new Date(date)) {
+        latestDates[zone] = date;
+      }
+    });
+  });
 
-            let lastHighlightedRow = null;
-            for (const [zone, name] of Object.entries(zoneData)) {
-                const row = document.createElement('tr');
-                const latestDate = latestDates[zone] || '기록 없음';
-                const isClosest = latestDate === closestDate && latestDate !== '기록 없음';
-                if (isClosest) {
-                    row.classList.add('highlight');
-                    lastHighlightedRow = row;
-                }
-                row.innerHTML = `<td>${zone}</td><td>${name}</td><td>${latestDate}</td>`;
-                tbody.appendChild(row);
-            }
+  // 5) 테이블 행 생성 및 하이라이팅
+  let lastHighlightedRow = null;
+  Object.entries(zoneData).forEach(([zone, name]) => {
+    const latestDate = latestDates[zone] || '기록 없음';
+    const isNewestOverall = latestDate === latestRecordedDate;
 
-            modal.style.display = 'block';
+    const row = document.createElement('tr');
+    if (isNewestOverall) {
+      row.classList.add('highlight');
+      lastHighlightedRow = row;
+    }
+    row.innerHTML = `<td>${zone}</td><td>${name}</td><td>${latestDate}</td>`;
+    tbody.appendChild(row);
+  });
 
-            if (lastHighlightedRow) {
-                setTimeout(() => {
-                    lastHighlightedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 0);
-            }
-        }
+  // 6) 모달 보이기 & 하이라이트된 행 스크롤
+  modal.style.display = 'block';
+  if (lastHighlightedRow) {
+    setTimeout(() => {
+      lastHighlightedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 0);
+  }
+}
+
 
         // 구역 목록 모달 닫기
         function closeZones() {

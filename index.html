@@ -163,6 +163,28 @@
             gap: 10px;
             align-items: center;
         }
+        .edit-mode-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: #FF9500 !important;
+            width: 80px;
+            height: 40px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background 0.3s;
+            z-index: 1000;
+        }
+        .edit-mode-btn.active {
+            background: #FF3B30 !important;
+        }
+        .edit-mode-btn span {
+            margin-left: 5px;
+        }
         button:disabled {
             background: #ddd !important;
             cursor: not-allowed;
@@ -224,9 +246,6 @@
         #zonesTable tr.highlight {
             background-color: #FFFF99 !important;
         }
-        .edit-mode-btn {
-            background: #FF9500 !important;
-        }
     </style>
 </head>
 <body>
@@ -256,8 +275,8 @@
     <div class="history-controls">
         <input type="date" id="historyDate">
         <button onclick="showZonesList()">📅 봉사기록</button>
-        <button class="edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()">수정</button>
     </div>
+    <button class="edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()" aria-label="수정 모드 토글">수정</button>
 
     <!-- 요약 화면 -->
     <div id="summaryModal" class="summary-modal">
@@ -344,8 +363,7 @@
         function toggleEditMode() {
             isEditMode = !isEditMode;
             const editBtn = document.getElementById('editModeBtn');
-            editBtn.textContent = isEditMode ? '읽기' : '수정';
-            editBtn.style.background = isEditMode ? '#FF3B30' : '#FF9500';
+            editBtn.classList.toggle('active', isEditMode);
             updateUIState();
             console.log('toggleEditMode - 수정 모드:', isEditMode);
         }

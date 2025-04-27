@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>구역배정 최종</title>
+    <title>구역배정</title>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -13,12 +13,6 @@
             background: #f5f5f7;
         }
         h1 { color: #007AFF; margin-bottom: 25px; }
-        .controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
         .zone-list { gap: 15px; margin: 20px 0; }
         .zone-item {
             background: white;
@@ -141,6 +135,9 @@
             background-color: #f9f9f9;
         }
         .history-controls {
+            position: fixed;
+            top: 90px;
+            left: 150px;
             background: white;
             padding: 10px;
             border-radius: 10px;
@@ -150,17 +147,23 @@
             background: #ddd !important;
             cursor: not-allowed;
         }
+        .summary-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #007AFF;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
     <h1>구역배정 프로그램</h1>
-    <div class="controls">
-        <button onclick="addZone()">+ 새 구역 추가</button>
-        <div class="history-controls">
-            <input type="date" id="historyDate">
-            <button onclick="loadHistory()">📅 기록 불러오기</button>
-        </div>
-    </div>
+    <button onclick="addZone()">+ 새 구역 추가</button>
     <div class="zone-list" id="zoneList"></div>
 
     <!-- 모달 -->
@@ -181,6 +184,12 @@
         </div>
     </div>
 
+    <!-- 부가 기능 영역 -->
+    <div class="history-controls">
+        <input type="date" id="historyDate">
+        <button onclick="loadHistory()">📅 기록 불러오기</button>
+    </div>
+
     <!-- 요약 화면 -->
     <div id="summaryModal" class="summary-modal">
         <div class="summary-content">
@@ -194,6 +203,9 @@
             </table>
         </div>
     </div>
+
+    <!-- 요약 버튼 -->
+    <div class="summary-button" onclick="showSummary()">요약 보기</div>
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
@@ -386,7 +398,7 @@
             document.getElementById('searchInput').value = '';
         }
 
-        // 요약 화면
+        // 요약 화면 열기
         function showSummary() {
             const modal = document.getElementById('summaryModal');
             const tbody = document.querySelector('#summaryTable tbody');
@@ -400,7 +412,7 @@
             modal.style.display = 'block';
         }
 
-        // 요약 닫기
+        // 요약 화면 닫기
         function closeSummary() {
             document.getElementById('summaryModal').style.display = 'none';
         }

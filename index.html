@@ -302,14 +302,15 @@
 
         // 모달 열기
         function openAssignModal(zone) {
-            if(!isEditableDate()) return alert("오늘 날짜만 수정 가능합니다");
-            currentZone = zone;
-            selectedNames = [...(assignments[zone] || [])];
-            document.getElementById('modalTitle').textContent = `구역 ${zone} 배정`;
-            document.getElementById('assignModal').style.display = 'block';
-            updateSelectedDisplay();
-            renderNames();
-        }
+    if(!isEditableDate()) return alert("오늘 날짜만 수정 가능합니다");
+    currentZone = zone;
+    selectedNames = [...(assignments[zone] || [])];
+    const zoneName = zoneData[zone] ? ` (${zoneData[zone]})` : '';
+    document.getElementById('modalTitle').textContent = `구역 ${zone}${zoneName} 배정`;
+    document.getElementById('assignModal').style.display = 'block';
+    updateSelectedDisplay();
+    renderNames();
+}
 
         // 이름 렌더링
         function renderNames() {
@@ -413,37 +414,39 @@
 
         // 구역 초기화
         function initZones() {
-            document.getElementById('zoneList').innerHTML = '';
-            for(const zone in assignments) {
-                document.getElementById('zoneList').innerHTML += `
-                    <div class="zone-item">
-                        <h4>구역 ${zone}</h4>
-                        <span class="edit-badge">${assignments[zone].length}명</span>
-                        <div class="buttons">
-                            <button onclick="openAssignModal(${zone})">인원배정</button>
-                            ${zone === '1' ? '<button onclick="showMap()" style="background:#34C759;">지도보기</button>' : ''}
-                            <button class="delete-btn" onclick="deleteZone(${zone})">삭제</button>
-                        </div>
-                        <div id="result-${zone}">${assignments[zone].join(', ')}</div>
-                    </div>`;
-            }
-            updateUIState();
-        }
+    document.getElementById('zoneList').innerHTML = '';
+    for(const zone in assignments) {
+        const zoneName = zoneData[zone] ? ` (${zoneData[zone]})` : '';
+        document.getElementById('zoneList').innerHTML += `
+            <div class="zone-item">
+                <h4>구역 ${zone}${zoneName}</h4>
+                <span class="edit-badge">${assignments[zone].length}명</span>
+                <div class="buttons">
+                    <button onclick="openAssignModal(${zone})">인원배정</button>
+                    ${zone === '1' ? '<button onclick="showMap()" style="background:#34C759;">지도보기</button>' : ''}
+                    <button class="delete-btn" onclick="deleteZone(${zone})">삭제</button>
+                </div>
+                <div id="result-${zone}">${assignments[zone].join(', ')}</div>
+            </div>`;
+    }
+    updateUIState();
+}
 
         // 구역 삭제
         async function deleteZone(zone) {
-            if(!isEditableDate()) return alert("오늘 날짜만 수정 가능합니다");
-            if(confirm(`구역 ${zone}을(를) 삭제하시겠습니까?`)) {
-                delete assignments[zone];
-                assignedPeople = [].concat(...Object.values(assignments));
-                initZones();
-                const date = document.getElementById('historyDate').value;
-                await db.collection('history').doc(date).set({
-                    zones: assignments,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
-        }
+    if(!isEditableDate()) return alert("오늘 날짜만 수정 가능합니다");
+    const zoneName = zoneData[zone] ? ` (${zoneData[zone]})` : '';
+    if(confirm(`구역 ${zone}${zoneName}을(를) 삭제하시겠습니까?`)) {
+        delete assignments[zone];
+        assignedPeople = [].concat(...Object.values(assignments));
+        initZones();
+        const date = document.getElementById('historyDate').value;
+        await db.collection('history').doc(date).set({
+            zones: assignments,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }
+}
 
         // 배지 업데이트
         function updateBadges() {
@@ -462,17 +465,18 @@
 
         // 요약 화면 열기
         function showSummary() {
-            const modal = document.getElementById('summaryModal');
-            const tbody = document.querySelector('#summaryTable tbody');
-            tbody.innerHTML = '';
+    const modal = document.getElementById('summaryModal');
+    const tbody = document.querySelector('#summaryTable tbody');
+    tbody.innerHTML = '';
 
-            for(const [zone, members] of Object.entries(assignments)) {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td>${zone}번</td><td>${members.join(', ')}</td>`;
-                tbody.appendChild(row);
-            }
-            modal.style.display = 'block';
-        }
+    for(const [zone, members] of Object.entries(assignments)) {
+        const zoneName = zoneData[zone] ? `<br><small>${zoneData[zone]}</small>` : '';
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${zone}번${zoneName}</td><td>${members.join(', ')}</td>`;
+        tbody.appendChild(row);
+    }
+    modal.style.display = 'block';
+}
 
         // 요약 화면 닫기
         function closeSummary() {
@@ -485,6 +489,188 @@
                 closeModal();
             }
         });
+        // 구역 정보 데이터
+    const zoneData = {
+    1: "정정란 미용실",
+    2: "박여자 자매댁",
+    3: "훈성 AB",
+    4: "한신 빌라",
+    5: "낙원 빌라",
+    6: "황금 아트빌",
+    7: "이종호 형제댁",
+    8: "우진 빌라",
+    9: "삼정빌라",
+    10: "HS팰리스",
+    11: "태양빌라",
+    12: "(구)제일 마트",
+    13: "SK주유소",
+    14: "(구) 미소 건강원(우측)",
+    15: "(구) 미소 건강원(좌측)",
+    16: "이선아 부동산",
+    17: "한진 주택",
+    18: "반석식품, 북한산 캐슬",
+    19: "보령주택(좌측)",
+    20: "송광맨션(우측)",
+    21: "청명대",
+    22: "살렘교회",
+    23: "연신시티, 공영주차장옆",
+    24: "UN빌라",
+    25: "(구)연신마트 -> 이마트24 편의점",
+    26: "성암빌라(우측)",
+    27: "성암빌라(좌측)",
+    28: "백마 빌리지",
+    29: "MS연립",
+    30: "예은빌, 건우주택",
+    31: "백마 노블레스텔",
+    32: "서부 중앙교회",
+    33: "삼흥아파트",
+    34: "연서시장(메트로 앞)",
+    35: "연서시장",
+    36: "메트로 타워1",
+    37: "메트로 타워2",
+    38: "(구)흥창물산",
+    39: "세마루(좌측)",
+    40: "세마루(우측)",
+    41: "미건빌라",
+    42: "젤라 빌리지",
+    43: "영광수퍼",
+    44: "연신내 한의원",
+    45: "(구)거성 건축 설비",
+    46: "삼계랑오리랑",
+    47: "지선 미용실",
+    48: "청운1,2,3,",
+    49: "크로바 문구(연신중 정문 앞)",
+    50: "이태준김재민 내과의원",
+    51: "GS 25시",
+    52: "연신중학교 밑",
+    53: "서부 농협",
+    54: "현대 (구)불광 주유소",
+    55: "삼보 약국",
+    56: "대창 아파트 101동",
+    57: "대창 아파트 102,103동",
+    58: "(구) 세종피아노",
+    59: "송광빌라",
+    60: "중앙빌라",
+    61: "흥영빌라",
+    62: "서강 아파트",
+    63: "삼성 쉐르빌",
+    64: "불광중학교1",
+    65: "불광중학교2",
+    66: "가든빌라",
+    67: "수정빌라",
+    68: "진양빌라",
+    69: "우리동네키움센터(구 YBM)",
+    70: "건우빌라",
+    71: "불광 어린이집",
+    72: "연천초등학교",
+    73: "이화마트",
+    74: "창덕주택",
+    75: "가든23차",
+    76: "(신)리치에비뉴",
+    77: "광서연립",
+    78: "구립도서관",
+    79: "미르라이프(도서관 하)",
+    80: "도시가스",
+    81: "가위소리",
+    82: "(구)은혜초교 1",
+    83: "(구)은혜초교 2",
+    84: "청우맨션",
+    85: "(구)노계순 자매댁 -> (신) 샹그리라",
+    86: "진광맨션",
+    87: "(구)현대마트 -> (현)CU편의점",
+    88: "(구)프라임인 서울호텔 -> (신)우경촌",
+    89: "힐스테이트 7차 (101,102동)",
+    90: "힐스테이트 7차 (103-105동)",
+    91: "힐스테이트 7차 (106-108동)",
+    92: "힐스테이트 7차 (109-111동)",
+    93: "힐스테이트 7차 (112-114동)",
+    94: "힐스테이트 7차 (115-116동)",
+    95: "문 치과",
+    96: "(구)연세선 학원 -> (신) 우리동네키움센터",
+    97: "한진 세탁소",
+    98: "메밀마을",
+    99: "emart24 (구)어울림마트",
+    100: "만민 베스트빌",
+    101: "만세 부동산",
+    102: "거장 노블레스",
+    103: "파크사이드빌",
+    104: "유니텔(UNITEL)",
+    105: "다리원(중국집)",
+    106: "맹구네 드럼통",
+    107: "모던하우스",
+    108: "(신) 대조한의원",
+    109: "할리스 커피",
+    110: "(신) 유성하이빌",
+    111: "새마을금고",
+    112: "범우빌라",
+    113: "삿뽀로우동집",
+    114: "제일은행",
+    115: "신한은행",
+    116: "크로커다일",
+    117: "(구)삼성생명",
+    118: "삼성생명(최명숙 자매댁)",
+    119: "범서쇼핑",
+    120: "구공탄 곱창",
+    121: "종로약국",
+    122: "종로약국(노인복지센터)",
+    123: "금호빌라",
+    124: "불광2동주민센터",
+    125: "이삭토스트",
+    126: "파이브시즌",
+    127: "세븐일레븐",
+    128: "불광보건소",
+    129: "크로바주택",
+    130: "불광2동지구대",
+    131: "은평경찰서",
+    132: "연신초등학교",
+    133: "연천중학교",
+    134: "금강프라임빌",
+    135: "새장골경로당",
+    136: "혜성문구",
+    137: "엘지아파트",
+    138: "새장골 어린이 공원",
+    139: "부성세탁소",
+    140: "스피트메이트",
+    141: "GS25",
+    142: "다윈하이빌",
+    143: "현대타운",
+    144: "하연하우스",
+    145: "스카이필튼",
+    146: "가인리치빌",
+    147: "장미쉐르빌",
+    148: "예향어린이집",
+    149: "세명컴퓨터 고등학교",
+    150: "하얀빌라",
+    151: "남양구르미 아파트",
+    152: "파파존스 피자",
+    153: "뉴타운 폭포동 (408-409)",
+    154: "뉴타운 폭포동 (410-412)",
+    155: "뉴타운 폭포동 (413-415)",
+    156: "뉴타운 폭포동 (416-419)",
+    157: "뉴타운 폭포동 (420-422)",
+    158: "뉴타운 폭포동 (423-425)",
+    159: "뉴타운 폭포동 (426-428)",
+    160: "뉴타운 진관사 (501-503)",
+    161: "뉴타운 진관사 (504-507)",
+    162: "뉴타운 진관사 (508-511)",
+    163: "뉴타운 진관사 (512-515)",
+    164: "뉴타운 진관사 (516-518)",
+    165: "뉴타운 진관사 (519-521)",
+    166: "한옥마을1",
+    167: "한옥마을2",
+    168: "한옥마을3",
+    169: "한옥마을4",
+    170: "한옥마을5",
+    171: "은뜨락 (101-103)",
+    172: "뉴타운 (112-115)",
+    173: "뉴타운 (1101-1102)",
+    174: "뉴타운 (1103-1105)",
+    175: "뉴타운 (1106-1110)",
+};
+
+for(let i=176; i<=268; i++) {
+    zoneData[i] = "추후 추가 예정";
+}
 
         // 자원봉사자 데이터
         const volunteers = {

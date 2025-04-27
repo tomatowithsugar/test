@@ -256,7 +256,7 @@
     <div class="history-controls">
         <input type="date" id="historyDate">
         <button onclick="showZonesList()">📅 봉사기록</button>
-        <button class="edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()">수정 모드</button>
+        <button class="edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()">수정</button>
     </div>
 
     <!-- 요약 화면 -->
@@ -344,7 +344,7 @@
         function toggleEditMode() {
             isEditMode = !isEditMode;
             const editBtn = document.getElementById('editModeBtn');
-            editBtn.textContent = isEditMode ? '읽기 모드' : '수정 모드';
+            editBtn.textContent = isEditMode ? '읽기' : '수정';
             editBtn.style.background = isEditMode ? '#FF3B30' : '#FF9500';
             updateUIState();
             console.log('toggleEditMode - 수정 모드:', isEditMode);

@@ -143,6 +143,10 @@
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
+        button:disabled {
+            background: #ddd !important;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -215,29 +219,47 @@
         let assignedPeople = [];
         let assignments = {};
 
+        // 편집 가능 날짜 체크
+        function isEditableDate() {
+            const today = new Date().toISOString().split('T')[0];
+            return document.getElementById('historyDate').value === today;
+        }
+
+        // UI 상태 업데이트
+        function updateUIState() {
+            const editable = isEditableDate();
+            document.querySelector('button[onclick="addZone()"]').disabled = !editable;
+            document.querySelectorAll('.zone-item button').forEach(btn => {
+                btn.disabled = !editable;
+            });
+        }
+
         // 초기 로드
         document.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const date = urlParams.get('date') || new Date().toISOString().split('T')[0];
             document.getElementById('historyDate').value = date;
+            
+            document.getElementById('historyDate').addEventListener('change', async () => {
+                await loadHistory();
+            });
+            
             await loadHistory();
         });
 
         // 구역 추가
         function addZone() {
+            if(!isEditableDate()) return alert("오늘 날짜만 수정 가능합니다");
             const zone = prompt("구역 번호 입력 (1-268)");
             if(!zone || zone < 1 || zone > 268) return alert("1-268 사이 숫자 입력");
-            document.getElementById('zoneList').innerHTML += `
-                <div class="zone-item">
-                    <h4>구역 ${zone}</h4>
-                    <span class="edit-badge">0명</span>
-                    <button onclick="openAssignModal(${zone})">인원배정</button>
-                    <div id="result-${zone}"></div>
-                </div>`;
+            
+            if (!assignments[zone]) assignments[zone] = [];
+            initZones();
         }
 
         // 모달 열기
         function openAssignModal(zone) {
+            if(!isEditableDate()) return alert("오늘 날짜만 수정 가능합니다");
             currentZone = zone;
             selectedNames = [...(assignments[zone] || [])];
             document.getElementById('modalTitle').textContent = `구역 ${zone} 배정`;
@@ -300,6 +322,7 @@
 
         // 데이터 저장
         async function confirmAssignment() {
+            if(!isEditableDate()) return alert("오늘 날짜만 수정 가능합니다");
             assignedPeople = assignedPeople.filter(n => !assignments[currentZone]?.includes(n));
             assignedPeople.push(...selectedNames);
             assignments[currentZone] = selectedNames;
@@ -310,6 +333,7 @@
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
 
+            initZones();
             updateBadges();
             closeModal();
         }
@@ -322,12 +346,12 @@
             if(doc.exists) {
                 assignments = doc.data().zones;
                 assignedPeople = [].concat(...Object.values(assignments));
-                initZones();
             } else {
                 assignments = {};
                 assignedPeople = [];
-                initZones();
             }
+            initZones();
+            updateUIState();
         }
 
         // 구역 초기화
@@ -342,6 +366,7 @@
                         <div id="result-${zone}">${assignments[zone].join(', ')}</div>
                     </div>`;
             }
+            updateUIState();
         }
 
         // 배지 업데이트
@@ -380,7 +405,7 @@
 
         // 공유 기능
         function shareData() {
-            const url = window.location.href;
+            const url = `${window.location.href.split('?')[0]}?date=${document.getElementById('historyDate').value}`;
             navigator.clipboard.writeText(url).then(() => {
                 alert("링크 복사 완료!\n이 링크를 공유하세요.");
             });

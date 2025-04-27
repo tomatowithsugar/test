@@ -249,7 +249,7 @@
     <!-- 부가 기능 영역 -->
     <div class="history-controls">
         <input type="date" id="historyDate">
-	<button onclick="showZonesList()">📅 기록 불러오기</button>
+        <button onclick="showZonesList()">📅 기록 불러오기</button>
     </div>
 
     <!-- 요약 화면 -->
@@ -323,51 +323,55 @@
 
         // 편집 가능 날짜 체크
         function isEditableDate() {
-    const now = new Date();
-    const tzOffset = now.getTimezoneOffset() * 60000;
-    const today = new Date(now - tzOffset).toISOString().split('T')[0];
-    const selectedDate = document.getElementById('historyDate').value;
-    return selectedDate === today;
-}
+            const now = new Date();
+            const tzOffset = now.getTimezoneOffset() * 60000;
+            const today = new Date(now - tzOffset).toISOString().split('T')[0];
+            const selectedDate = document.getElementById('historyDate').value;
+            console.log('isEditableDate - 오늘:', today, '선택된 날짜:', selectedDate, '편집 가능:', selectedDate >= today);
+            return selectedDate >= today;
+        }
 
         // UI 상태 업데이트
         function updateUIState() {
-    const editable = isEditableDate();
-    document.querySelector('button[onclick="addZone()"]').disabled = !editable;
-    document.querySelectorAll('.zone-item button').forEach(btn => {
-        if(btn.innerText !== '지도보기') { // 지도보기 버튼은 예외
-            btn.disabled = !editable;
+            const editable = isEditableDate();
+            console.log('updateUIState - 편집 가능:', editable);
+            document.querySelector('button[onclick="addZone()"]').disabled = !editable;
+            document.querySelectorAll('.zone-item button').forEach(btn => {
+                if (btn.innerText !== '지도보기') { // 지도보기 버튼은 예외
+                    btn.disabled = !editable;
+                }
+            });
         }
-    });
-}
 
         // 초기 로드
         document.addEventListener('DOMContentLoaded', async () => {
-    // 현지 시간 기준 오늘 날짜 계산
-    const now = new Date();
-    const tzOffset = now.getTimezoneOffset() * 60000;
-    const today = new Date(now - tzOffset).toISOString().split('T')[0];
-    
-    // 날짜 입력 필드 초기화
-    const dateInput = document.getElementById('historyDate');
-    dateInput.value = today;
-    
-    // 이벤트 리스너 추가
-    dateInput.addEventListener('change', async () => {
-        await loadHistory();
-        updateUIState();
-    });
-    
-    // 초기 데이터 로드
-    await loadHistory();
-    updateUIState();
-});
+            // 현지 시간 기준 오늘 날짜 계산
+            const now = new Date();
+            const tzOffset = now.getTimezoneOffset() * 60000;
+            const today = new Date(now - tzOffset).toISOString().split('T')[0];
+            console.log('DOMContentLoaded - 날짜 설정:', today);
+            
+            // 날짜 입력 필드 초기화
+            const dateInput = document.getElementById('historyDate');
+            dateInput.value = today;
+            
+            // 이벤트 리스너 추가
+            dateInput.addEventListener('change', async () => {
+                console.log('historyDate 변경:', dateInput.value);
+                await loadHistory();
+                updateUIState();
+            });
+            
+            // 초기 데이터 로드
+            await loadHistory();
+            updateUIState();
+        });
 
         // 구역 추가
         function addZone() {
-            if(!isEditableDate()) return alert("오늘 날짜만 수정 가능합니다");
+            if (!isEditableDate()) return alert("과거 날짜는 수정할 수 없습니다");
             const zone = prompt("구역 번호 입력 (1-268)");
-            if(!zone || zone < 1 || zone > 268) return alert("1-268 사이 숫자 입력");
+            if (!zone || zone < 1 || zone > 268) return alert("1-268 사이 숫자 입력");
             
             if (!assignments[zone]) assignments[zone] = [];
             initZones();
@@ -375,7 +379,7 @@
 
         // 모달 열기
         function openAssignModal(zone) {
-            if(!isEditableDate()) return alert("오늘 날짜만 수정 가능합니다");
+            if (!isEditableDate()) return alert("과거 날짜는 수정할 수 없습니다");
             currentZone = zone;
             selectedNames = [...(assignments[zone] || [])];
             const zoneName = zoneData[zone] ? ` (${zoneData[zone]})` : '';
@@ -388,7 +392,7 @@
         // 이름 렌더링
         function renderNames() {
             let html = '';
-            for(const [type, names] of Object.entries(volunteers)) {
+            for (const [type, names] of Object.entries(volunteers)) {
                 html += `<h4>${type}</h4>`;
                 html += names.map(name => `
                     <div class="name-tag 
@@ -422,7 +426,7 @@
         // 직접 추가
         function addCustomPerson() {
             const name = prompt("추가할 이름 입력");
-            if(name) {
+            if (name) {
                 volunteers.기타.push(name);
                 renderNames();
                 filterNames();
@@ -439,7 +443,7 @@
 
         // 데이터 저장
         async function confirmAssignment() {
-            if(!isEditableDate()) return alert("오늘 날짜만 수정 가능합니다");
+            if (!isEditableDate()) return alert("과거 날짜는 수정할 수 없습니다");
             assignedPeople = assignedPeople.filter(n => !assignments[currentZone]?.includes(n));
             assignedPeople.push(...selectedNames);
             assignments[currentZone] = selectedNames;
@@ -520,7 +524,7 @@
 
         // 모달 외부 클릭 닫기
         document.getElementById('mapModal').addEventListener('click', (e) => {
-            if(e.target === document.getElementById('mapModal')) {
+            if (e.target === document.getElementById('mapModal')) {
                 closeMap();
             }
         });
@@ -528,7 +532,7 @@
         // 구역 초기화
         function initZones() {
             document.getElementById('zoneList').innerHTML = '';
-            for(const zone in assignments) {
+            for (const zone in assignments) {
                 const zoneName = zoneData[zone] ? ` (${zoneData[zone]})` : '';
                 document.getElementById('zoneList').innerHTML += `
                     <div class="zone-item">
@@ -547,9 +551,9 @@
 
         // 구역 삭제
         async function deleteZone(zone) {
-            if(!isEditableDate()) return alert("오늘 날짜만 수정 가능합니다");
+            if (!isEditableDate()) return alert("과거 날짜는 수정할 수 없습니다");
             const zoneName = zoneData[zone] ? ` (${zoneData[zone]})` : '';
-            if(confirm(`구역 ${zone}${zoneName}을(를) 삭제하시겠습니까?`)) {
+            if (confirm(`구역 ${zone}${zoneName}을(를) 삭제하시겠습니까?`)) {
                 delete assignments[zone];
                 assignedPeople = [].concat(...Object.values(assignments));
                 initZones();
@@ -582,7 +586,7 @@
             const tbody = document.querySelector('#summaryTable tbody');
             tbody.innerHTML = '';
 
-            for(const [zone, members] of Object.entries(assignments)) {
+            for (const [zone, members] of Object.entries(assignments)) {
                 const zoneName = zoneData[zone] ? `<br><small>${zoneData[zone]}</small>` : '';
                 const row = document.createElement('tr');
                 row.innerHTML = `<td>${zone}번${zoneName}</td><td>${members.join(', ')}</td>`;
@@ -598,14 +602,14 @@
 
         // 모달 외부 클릭 닫기
         document.getElementById('assignModal').addEventListener('click', (e) => {
-            if(e.target === document.getElementById('assignModal')) {
+            if (e.target === document.getElementById('assignModal')) {
                 closeModal();
             }
         });
 
         // 구역 목록 모달 외부 클릭 닫기
         document.getElementById('zonesModal').addEventListener('click', (e) => {
-            if(e.target === document.getElementById('zonesModal')) {
+            if (e.target === document.getElementById('zonesModal')) {
                 closeZones();
             }
         });
@@ -789,7 +793,7 @@
             175: "뉴타운 (1106-1110)",
         };
 
-        for(let i=176; i<=268; i++) {
+        for (let i = 176; i <= 268; i++) {
             zoneData[i] = "추후 추가 예정";
         }
 
@@ -808,7 +812,7 @@
             console.log('loadHistory - 데이터 가져오기 날짜:', date);
             const doc = await db.collection('history').doc(date).get();
             
-            if(doc.exists) {
+            if (doc.exists) {
                 assignments = doc.data().zones;
                 assignedPeople = [].concat(...Object.values(assignments));
             } else {

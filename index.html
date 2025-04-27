@@ -20,6 +20,21 @@
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .zone-item .buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .delete-btn {
+            background: #FF3B30;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
         }
         .modal {
             display: none;
@@ -27,6 +42,7 @@
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.5);
             padding: 20px;
+            z-index: 3000; /* 모달이 history control 위에 오도록 z-index 설정 */
         }
         .modal-content {
             background: white;
@@ -142,6 +158,7 @@
             padding: 10px;
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 1000; /* history control의 z-index를 모달보다 낮게 설정 */
         }
         button:disabled {
             background: #ddd !important;
@@ -376,11 +393,29 @@
                     <div class="zone-item">
                         <h4>구역 ${zone}</h4>
                         <span class="edit-badge">${assignments[zone].length}명</span>
-                        <button onclick="openAssignModal(${zone})">인원배정</button>
+                        <div class="buttons">
+                            <button onclick="openAssignModal(${zone})">인원배정</button>
+                            <button class="delete-btn" onclick="deleteZone(${zone})">삭제</button>
+                        </div>
                         <div id="result-${zone}">${assignments[zone].join(', ')}</div>
                     </div>`;
             }
             updateUIState();
+        }
+
+        // 구역 삭제
+        async function deleteZone(zone) {
+            if(!isEditableDate()) return alert("오늘 날짜만 수정 가능합니다");
+            if(confirm(`구역 ${zone}을(를) 삭제하시겠습니까?`)) {
+                delete assignments[zone];
+                assignedPeople = [].concat(...Object.values(assignments));
+                initZones();
+                const date = document.getElementById('historyDate').value;
+                await db.collection('history').doc(date).set({
+                    zones: assignments,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
         }
 
         // 배지 업데이트

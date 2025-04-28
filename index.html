@@ -250,6 +250,18 @@
         #zonesTable tr.highlight {
             background-color: #FFFF99 !important;
         }
+        #zonesTable tr {
+            cursor: pointer;
+        }
+        #zonesTable tr.disabled {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+        }
+        #zonesTable tr.selected-row {
+            background-color: #007AFF !important;
+            color: white;
+            font-weight: bold;
+        }
         .personal-zone, .household-count, .recent-visit {
             font-size: 0.85em;
             color: #666;
@@ -331,7 +343,7 @@
             <h2>구역 목록</h2>
             <table id="zonesTable">
                 <thead>
-                    <tr><th>선택</th><th>구역 번호</th><th>구역 명</th><th>최근 봉사 날짜</th></tr>
+                    <tr><th>구역 번호</th><th>구역 명</th><th>최근 봉사 날짜</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -375,6 +387,7 @@
         let assignments = {};
         let isEditMode = false;
         let recentVisits = {};
+        let selectedZones = []; // 선택된 구역 관리
 
         // 편집 가능 여부 체크
         function isEditableDate() {
@@ -484,11 +497,9 @@
         // 선택한 구역 추가
         async function addSelectedZones() {
             if (!isEditableDate()) return alert("과거 날짜는 수정할 수 없습니다");
-            const checkboxes = document.querySelectorAll('#zonesTable input[type="checkbox"]:checked');
-            if (checkboxes.length === 0) return alert("추가할 구역을 선택하세요.");
+            if (selectedZones.length === 0) return alert("추가할 구역을 선택하세요.");
 
-            checkboxes.forEach(checkbox => {
-                const zone = checkbox.value;
+            selectedZones.forEach(zone => {
                 if (!assignments[zone]) assignments[zone] = [];
             });
 
@@ -498,6 +509,7 @@
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
 
+            selectedZones = []; // 선택 초기화
             initZones();
             closeZones();
         }
@@ -590,6 +602,7 @@
             const modal = document.getElementById('zonesModal');
             const tbody = document.querySelector('#zonesTable tbody');
             tbody.innerHTML = '';
+            selectedZones = []; // 선택 초기화
 
             const historySnapshot = await db.collection('history')
                 .orderBy('timestamp', 'desc')
@@ -616,17 +629,24 @@
                 const latestDate = latestDates[zone] || '기록 없음';
                 const isNewestOverall = latestDate === latestRecordedDate;
                 const personalZone = personalZoneData[zone] ? `<small class="personal-zone-info">[개인구역: ${personalZoneData[zone]}]</small>` : '';
+                const isDisabled = assignments[zone] ? 'disabled' : '';
 
                 const row = document.createElement('tr');
                 if (isNewestOverall) {
                     row.classList.add('highlight');
                     lastHighlightedRow = row;
                 }
+                if (isDisabled) {
+                    row.classList.add('disabled');
+                }
+                row.setAttribute('data-zone', zone);
                 row.innerHTML = `
-                    <td><input type="checkbox" value="${zone}" ${assignments[zone] ? 'disabled' : ''}></td>
                     <td>${zone}</td>
                     <td>${name} ${personalZone}</td>
                     <td>${latestDate}</td>`;
+                if (!isDisabled) {
+                    row.onclick = () => toggleZoneSelection(row, zone);
+                }
                 tbody.appendChild(row);
             });
 
@@ -638,9 +658,24 @@
             }
         }
 
+        // 구역 선택 토글
+        function toggleZoneSelection(row, zone) {
+            if (row.classList.contains('disabled')) return;
+            row.classList.toggle('selected-row');
+            if (selectedZones.includes(zone)) {
+                selectedZones = selectedZones.filter(z => z !== zone);
+            } else {
+                selectedZones.push(zone);
+            }
+        }
+
         // 구역 목록 모달 닫기
         function closeZones() {
             document.getElementById('zonesModal').style.display = 'none';
+            selectedZones = []; // 선택 초기화
+            document.querySelectorAll('#zonesTable tr.selected-row').forEach(row => {
+                row.classList.remove('selected-row');
+            });
         }
 
         // 지도 표시
@@ -920,7 +955,7 @@
             132: "연신초등학교",
             133: "연천중학교",
             134: "금강프라임빌",
-            135: "새장골경kinase당",
+            135: "새장골경로당",
             136: "혜성문구",
             137: "엘지아파트",
             138: "새장골 어린이 공원",
@@ -976,7 +1011,7 @@
             153: "이아영",
             154: "김인기",
             156: "강승희",
-            158: "김옥순B",
+            158: "김옥순",
             159: "이지애",
             160: "이현석",
             162: "김은희",

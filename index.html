@@ -246,6 +246,15 @@
         #zonesTable tr.highlight {
             background-color: #FFFF99 !important;
         }
+        .zone-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .personal-zone {
+            font-size: 0.85em;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -566,8 +575,6 @@
   }
 }
 
-
-
         // 구역 목록 모달 닫기
         function closeZones() {
             document.getElementById('zonesModal').style.display = 'none';
@@ -593,9 +600,13 @@
             document.getElementById('zoneList').innerHTML = '';
             for (const zone in assignments) {
                 const zoneName = zoneData[zone] ? ` (${zoneData[zone]})` : '';
+                const personalZone = personalZoneData[zone] ? `[개인구역: ${personalZoneData[zone]}]` : '';
                 document.getElementById('zoneList').innerHTML += `
                     <div class="zone-item">
-                        <h4>구역 ${zone}${zoneName}</h4>
+                        <div class="zone-header">
+                            <h4 style="margin: 0;">구역 ${zone}${zoneName}</h4>
+                            ${personalZone ? `<span class="personal-zone">${personalZone}</span>` : ''}
+                        </div>
                         <span class="edit-badge">${assignments[zone].length}명</span>
                         <div class="buttons">
                             <button onclick="openAssignModal(${zone})">인원배정</button>
@@ -696,7 +707,7 @@
             19: "보령주택(좌측)",
             20: "송광맨션(우측)",
             21: "청명대",
-            22: "살렴교회",
+            22: "살렘교회",
             23: "연신시티, 공영주차장옆",
             24: "UN빌라",
             25: "(구)연신마트 -> 이마트24 편의점",
@@ -745,7 +756,7 @@
             68: "진양빌라",
             69: "우리동네키움센터(구 YBM)",
             70: "건우빌라",
-            71: "불광2 어린이집",
+            71: "불광 어린이집",
             72: "연천초등학교",
             73: "이화마트",
             74: "창덕주택",
@@ -855,6 +866,29 @@
         for (let i = 176; i <= 268; i++) {
             zoneData[i] = "추후 추가 예정";
         }
+
+        // 개인 구역 데이터
+        const personalZoneData = {
+            90: "김은희",
+            91: "박현숙",
+            92: "정종민",
+            93: "이영재",
+            153: "이아영",
+            154: "김인기",
+            156: "강승희",
+            158: "김옥순B",
+            159: "이지애",
+            160: "이현석",
+            162: "김은희",
+            163: "이현석",
+            164: "이영재",
+            165: "강승희",
+            171: "정종민",
+            173: "정종민",
+            174: "정종민",
+            175: "정종민",
+            268: "권수진"
+        };
 
         // 자원봉사자 데이터
         const volunteers = {

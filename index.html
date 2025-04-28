@@ -249,7 +249,7 @@
         #zonesTable tr.highlight {
             background-color: #FFFF99 !important;
         }
-        .personal-zone, .household-count {
+        .personal-zone, .household-count, .recent-visit {
             font-size: 0.85em;
             color: #666;
             margin-top: -2px;
@@ -350,6 +350,7 @@
         let assignedPeople = [];
         let assignments = {};
         let isEditMode = false;
+        let recentVisits = {};
 
         // 편집 가능 여부 체크
         function isEditableDate() {
@@ -410,14 +411,41 @@
             dateInput.addEventListener('change', async () => {
                 console.log('historyDate 변경:', dateInput.value);
                 await loadHistory();
+                await loadRecentVisits();
                 updateEditModeButtonVisibility();
                 updateUIState();
             });
             
             await loadHistory();
+            await loadRecentVisits();
             updateEditModeButtonVisibility();
             updateUIState();
         });
+
+        // 최근 방문 데이터 불러오기
+        async function loadRecentVisits() {
+    recentVisits = {};
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    const today = new Date(now - tzOffset).toISOString().split('T')[0]; // 오늘 날짜
+
+    const historySnapshot = await db.collection('history')
+        .orderBy('timestamp', 'desc')
+        .get();
+
+    historySnapshot.forEach(doc => {
+        const date = doc.id;
+        if (date !== today) { // 오늘 날짜 제외
+            const zones = doc.data().zones || {};
+            Object.keys(zones).forEach(zone => {
+                if (!recentVisits[zone] || new Date(recentVisits[zone]) < new Date(date)) {
+                    recentVisits[zone] = date;
+                }
+            });
+        }
+    });
+    initZones();
+}
 
         // 구역 추가
         function addZone() {
@@ -506,6 +534,7 @@
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
 
+            await loadRecentVisits();
             initZones();
             updateBadges();
             closeModal();
@@ -607,11 +636,13 @@
                 const zoneName = zoneData[zone] ? ` (${zoneData[zone]})` : '';
                 const personalZone = personalZoneData[zone] ? `[개인구역: ${personalZoneData[zone]}]` : '';
                 const household = householdData[zone] ? `[가구수: ${householdData[zone]}]` : '';
+                const recentVisit = recentVisits[zone] ? `[최근방문: ${recentVisits[zone]}]` : '[최근방문: -]';
                 document.getElementById('zoneList').innerHTML += `
                     <div class="zone-item">
                         <h4>구역 ${zone}${zoneName}</h4>
                         ${personalZone ? `<div class="personal-zone">${personalZone}</div>` : ''}
                         ${household ? `<div class="household-count">${household}</div>` : ''}
+                        ${recentVisit ? `<div class="recent-visit">${recentVisit}</div>` : ''}
                         <span class="edit-badge">${assignments[zone].length}명</span>
                         <div class="buttons">
                             <button onclick="openAssignModal(${zone})">인원배정</button>

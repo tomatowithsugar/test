@@ -25,7 +25,7 @@
             gap: 10px;
         }
         .zone-item h4 {
-            margin: 0 0 2px 0; /* Reduce bottom margin to decrease gap */
+            margin: 0 0 2px 0;
         }
         .zone-item .buttons {
             display: flex;
@@ -252,8 +252,8 @@
         .personal-zone, .household-count {
             font-size: 0.85em;
             color: #666;
-            margin-top: -2px; /* Reduced to make the gap smaller */
-            line-height: 1.2; /* Tighten line spacing for better compactness */
+            margin-top: -2px;
+            line-height: 1.2;
         }
     </style>
 </head>
@@ -320,14 +320,8 @@
     <div class="modal" id="mapModal">
         <div class="modal-content" style="height:85vh;">
             <button class="delete-btn" onclick="closeMap()" style="position:absolute; right:15px; top:15px;">닫기</button>
-            <h3>구역 1 지도</h3>
-            <iframe 
-                src="https://www.google.com/maps/d/embed?mid=1bYOTo09R4lpFllZCBoz8rIS3wvMzX3Y&ehbc=2E312F" 
-                width="100%" 
-                height="90%"
-                style="border:0; border-radius:8px; margin-top:15px;"
-                allowfullscreen>
-            </iframe>
+            <h3 id="mapModalTitle"></h3>
+            <div id="mapContainer" style="width:100%; height:90%; margin-top:15px;"></div>
         </div>
     </div>
     <!-- Firebase -->
@@ -355,11 +349,11 @@
         let selectedNames = [];
         let assignedPeople = [];
         let assignments = {};
-        let isEditMode = false; // 수정 모드 상태
+        let isEditMode = false;
 
         // 편집 가능 여부 체크
         function isEditableDate() {
-            if (isEditMode) return true; // 수정 모드에서는 편집 가능
+            if (isEditMode) return true;
             const now = new Date();
             const tzOffset = now.getTimezoneOffset() * 60000;
             const today = new Date(now - tzOffset).toISOString().split('T')[0];
@@ -386,7 +380,7 @@
             const editBtn = document.getElementById('editModeBtn');
             editBtn.style.display = selectedDate < today ? 'inline-block' : 'none';
             if (selectedDate >= today) {
-                isEditMode = false; // 현재/미래 날짜에서는 수정 모드 비활성화
+                isEditMode = false;
             }
             console.log('updateEditModeButtonVisibility - 선택된 날짜:', selectedDate, '오늘:', today, '버튼 표시:', editBtn.style.display);
         }
@@ -397,7 +391,7 @@
             console.log('updateUIState - 편집 가능:', editable);
             document.querySelector('button[onclick="addZone()"]').disabled = !editable;
             document.querySelectorAll('.zone-item button').forEach(btn => {
-                if (btn.innerText !== '지도보기') { // 지도보기 버튼은 예외
+                if (btn.innerText !== '지도보기') {
                     btn.disabled = !editable;
                 }
             });
@@ -405,17 +399,14 @@
 
         // 초기 로드
         document.addEventListener('DOMContentLoaded', async () => {
-            // 현지 시간 기준 오늘 날짜 계산
             const now = new Date();
             const tzOffset = now.getTimezoneOffset() * 60000;
             const today = new Date(now - tzOffset).toISOString().split('T')[0];
             console.log('DOMContentLoaded - 날짜 설정:', today);
             
-            // 날짜 입력 필드 초기화
             const dateInput = document.getElementById('historyDate');
             dateInput.value = today;
             
-            // 이벤트 리스너 추가
             dateInput.addEventListener('change', async () => {
                 console.log('historyDate 변경:', dateInput.value);
                 await loadHistory();
@@ -423,7 +414,6 @@
                 updateUIState();
             });
             
-            // 초기 데이터 로드
             await loadHistory();
             updateEditModeButtonVisibility();
             updateUIState();
@@ -523,69 +513,84 @@
 
         // 구역 목록 표시
         async function showZonesList() {
-  const modal = document.getElementById('zonesModal');
-  const tbody = document.querySelector('#zonesTable tbody');
-  tbody.innerHTML = '';
+            const modal = document.getElementById('zonesModal');
+            const tbody = document.querySelector('#zonesTable tbody');
+            tbody.innerHTML = '';
 
-  // Firestore 에서 timestamp 내림차순으로 전체 기록 가져오기
-  const historySnapshot = await db.collection('history')
-    .orderBy('timestamp', 'desc')
-    .get();
+            const historySnapshot = await db.collection('history')
+                .orderBy('timestamp', 'desc')
+                .get();
 
-  // zone별 가장 최신 기록 날짜 계산
-  const latestDates = {};
-  historySnapshot.forEach(doc => {
-    const date = doc.id;
-    const zones = doc.data().zones || {};
-    Object.keys(zones).forEach(zone => {
-      if (!latestDates[zone] || new Date(latestDates[zone]) < new Date(date)) {
-        latestDates[zone] = date;
-      }
-    });
-  });
+            const latestDates = {};
+            historySnapshot.forEach(doc => {
+                const date = doc.id;
+                const zones = doc.data().zones || {};
+                Object.keys(zones).forEach(zone => {
+                    if (!latestDates[zone] || new Date(latestDates[zone]) < new Date(date)) {
+                        latestDates[zone] = date;
+                    }
+                });
+            });
 
-  // **여기서 핵심**: zone별 최신일 중 실제 존재하는 날짜만 모아서
-  // 그 중 가장 큰 날짜를 전체 최신일로 삼는다
-  const allZoneDates = Object.values(latestDates);
-  const latestRecordedDate = allZoneDates.length
-    ? allZoneDates.reduce((a, b) => new Date(a) > new Date(b) ? a : b)
-    : null;
+            const allZoneDates = Object.values(latestDates);
+            const latestRecordedDate = allZoneDates.length
+                ? allZoneDates.reduce((a, b) => new Date(a) > new Date(b) ? a : b)
+                : null;
 
-  // 테이블 생성 및 하이라이팅
-  let lastHighlightedRow = null;
-  Object.entries(zoneData).forEach(([zone, name]) => {
-    const latestDate = latestDates[zone] || '기록 없음';
-    const isNewestOverall = latestDate === latestRecordedDate;
+            let lastHighlightedRow = null;
+            Object.entries(zoneData).forEach(([zone, name]) => {
+                const latestDate = latestDates[zone] || '기록 없음';
+                const isNewestOverall = latestDate === latestRecordedDate;
 
-    const row = document.createElement('tr');
-    if (isNewestOverall) {
-      row.classList.add('highlight');
-      lastHighlightedRow = row;
-    }
-    row.innerHTML = `<td>${zone}</td><td>${name}</td><td>${latestDate}</td>`;
-    tbody.appendChild(row);
-  });
+                const row = document.createElement('tr');
+                if (isNewestOverall) {
+                    row.classList.add('highlight');
+                    lastHighlightedRow = row;
+                }
+                row.innerHTML = `<td>${zone}</td><td>${name}</td><td>${latestDate}</td>`;
+                tbody.appendChild(row);
+            });
 
-  // 모달 열고 하이라이팅된 행으로 스크롤
-  modal.style.display = 'block';
-  if (lastHighlightedRow) {
-    setTimeout(() => {
-      lastHighlightedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 0);
-  }
-}
+            modal.style.display = 'block';
+            if (lastHighlightedRow) {
+                setTimeout(() => {
+                    lastHighlightedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 0);
+            }
+        }
 
         // 구역 목록 모달 닫기
         function closeZones() {
             document.getElementById('zonesModal').style.display = 'none';
         }
 
-        function showMap() {
-            document.getElementById('mapModal').style.display = 'block';
+        // 지도 표시
+        function showMap(zone) {
+            const modal = document.getElementById('mapModal');
+            const mapContainer = document.getElementById('mapContainer');
+            const mapModalTitle = document.getElementById('mapModalTitle');
+            const zoneName = zoneData[zone] ? ` (${zoneData[zone]})` : '';
+            mapModalTitle.textContent = `구역 ${zone}${zoneName} 지도`;
+            
+            if (mapLinks[zone]) {
+                mapContainer.innerHTML = `
+                    <iframe 
+                        src="${mapLinks[zone]}" 
+                        width="100%" 
+                        height="100%"
+                        style="border:0; border-radius:8px;"
+                        allowfullscreen>
+                    </iframe>`;
+                modal.style.display = 'block';
+            } else {
+                alert("해당 구역의 지도가 없습니다.");
+            }
         }
 
+        // 지도 모달 닫기
         function closeMap() {
             document.getElementById('mapModal').style.display = 'none';
+            document.getElementById('mapContainer').innerHTML = '';
         }
 
         // 모달 외부 클릭 닫기
@@ -610,7 +615,7 @@
                         <span class="edit-badge">${assignments[zone].length}명</span>
                         <div class="buttons">
                             <button onclick="openAssignModal(${zone})">인원배정</button>
-                            ${zone === '1' ? '<button onclick="showMap()" style="background:#34C759;">지도보기</button>' : ''}
+                            ${mapLinks[zone] ? `<button onclick="showMap(${zone})" style="background:#34C759;">지도보기</button>` : ''}
                             <button class="delete-btn" onclick="deleteZone(${zone})">삭제</button>
                         </div>
                         <div id="result-${zone}">${assignments[zone].join(', ')}</div>
@@ -683,6 +688,13 @@
                 closeZones();
             }
         });
+
+        // 지도 링크
+        const mapLinks = {
+            1: "https://www.google.com/maps/d/embed?mid=1bYOTo09R4lpFllZCBoz8rIS3wvMzX3Y&ehbc=2E312F",
+            2: "https://www.google.com/maps/d/u/1/embed?mid=1a09TGVLXo7oWJomZBogCapuqBX2PdMk&ehbc=2E312F",
+            3: "https://www.google.com/maps/d/u/1/embed?mid=13wwGtcvmp_kxp3nv-Nx2QwatT_OtMjI&ehbc=2E312F"
+        };
 
         // 구역 정보 데이터
         const zoneData = {
@@ -822,45 +834,45 @@
             134: "금강프라임빌",
             135: "새장골경로당",
             136: "혜성문구",
-            137:	"엘지아파트",
-            138:	"새장골 어린이 공원",
-            139:	"부성세탁소",
-            140:	"스피트메이트",
-            141:	"GS25",
-            142:	"다윈하이빌",
-            143:	"현대타운",
-            144:	"하연하우스",
-            145:	"스카이필튼",
-            146:	"가인리치빌",
-            147:	"장미쉐르빌",
-            148:	"예향어린이집",
-            149:	"세명컴퓨터 고등학교",
-            150:	"하얀빌라",
-            151:	"남양구르미 아파트",
-            152:	"파파존스 피자",
-            153:	"뉴타운 폭포동 (408-409)",
-            154:	"뉴타운 폭포동 (410-412)",
-            155:	"뉴타운 폭포동 (413-415)",
-            156:	"뉴타운 폭포동 (416-419)",
-            157:	"뉴타운 폭포동 (420-422)",
-            158:	"뉴타운 폭포동 (423-425)",
-            159:	"뉴타운 폭포동 (426-428)",
-            160:	"뉴타운 진관사 (501-503)",
-            161:	"뉴타운 진관사 (504-507)",
-            162:	"뉴타운 진관사 (508-511)",
-            163:	"뉴타운 진관사 (512-515)",
-            164:	"뉴타운 진관사 (516-518)",
-            165:	"뉴타운 진관사 (519-521)",
-            166:	"한옥마을1",
-            167:	"한옥마을2",
-            168:	"한옥마을3",
-            169:	"한옥마을4",
-            170:	"한옥마을5",
-            171:	"은뜨락 (101-103)",
-            172:	"뉴타운 (112-115)",
-            173:	"뉴타운 (1101-1102)",
-            174:	"뉴타운 (1103-1105)",
-            175:	"뉴타운 (1106-1110)",
+            137: "엘지아파트",
+            138: "새장골 어린이 공원",
+            139: "부성세탁소",
+            140: "스피트메이트",
+            141: "GS25",
+            142: "다윈하이빌",
+            143: "현대타운",
+            144: "하연하우스",
+            145: "스카이필튼",
+            146: "가인리치빌",
+            147: "장미쉐르빌",
+            148: "예향어린이집",
+            149: "세명컴퓨터 고등학교",
+            150: "하얀빌라",
+            151: "남양구르미 아파트",
+            152: "파파존스 피자",
+            153: "뉴타운 폭포동 (408-409)",
+            154: "뉴타운 폭포동 (410-412)",
+            155: "뉴타운 폭포동 (413-415)",
+            156: "뉴타운 폭포동 (416-419)",
+            157: "뉴타운 폭포동 (420-422)",
+            158: "뉴타운 폭포동 (423-425)",
+            159: "뉴타운 폭포동 (426-428)",
+            160: "뉴타운 진관사 (501-503)",
+            161: "뉴타운 진관사 (504-507)",
+            162: "뉴타운 진관사 (508-511)",
+            163: "뉴타운 진관사 (512-515)",
+            164: "뉴타운 진관사 (516-518)",
+            165: "뉴타운 진관사 (519-521)",
+            166: "한옥마을1",
+            167: "한옥마을2",
+            168: "한옥마을3",
+            169: "한옥마을4",
+            170: "한옥마을5",
+            171: "은뜨락 (101-103)",
+            172: "뉴타운 (112-115)",
+            173: "뉴타운 (1101-1102)",
+            174: "뉴타운 (1103-1105)",
+            175: "뉴타운 (1106-1110)",
         };
 
         for (let i = 176; i <= 268; i++) {

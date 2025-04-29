@@ -326,6 +326,16 @@
             color: #666;
             margin-left: 5px;
         }
+        .checkbox-container {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .checkbox-container label {
+            font-size: 0.9em;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -337,6 +347,10 @@
     <div class="modal" id="assignModal">
         <div class="modal-content">
             <h3 id="modalTitle"></h3>
+            <div class="checkbox-container">
+                <input type="checkbox" id="allowMultipleAssignments">
+                <label for="allowMultipleAssignments">동일 인원 다중 배정 허용</label>
+            </div>
             <input type="text" id="searchInput" placeholder="🔍 이름 검색" onkeyup="filterNames()">
             <div class="selected-area">
                 <h4>선택한 인원 (<span id="selectedCount">0</span>명)</h4>
@@ -549,6 +563,7 @@
             selectedNames = [...(assignments[zone] || [])];
             const zoneName = zoneData[zone] ? ` (${zoneData[zone]})` : '';
             document.getElementById('modalTitle').textContent = `구역 ${zone}${zoneName} 배정`;
+            document.getElementById('allowMultipleAssignments').checked = false; // Default to unchecked
             document.getElementById('assignModal').style.display = 'block';
             updateSelectedDisplay();
             renderNames();
@@ -556,15 +571,17 @@
 
         // 이름 렌더링
         function renderNames() {
+            const allowMultiple = document.getElementById('allowMultipleAssignments').checked;
             let html = '';
             for (const [type, names] of Object.entries(volunteers)) {
                 html += `<h4>${type}</h4>`;
                 html += names.map(name => `
                     <div class="name-tag 
-                        ${assignedPeople.includes(name) && !selectedNames.includes(name) ? 'assigned' : ''}
+                        ${!allowMultiple && assignedPeople.includes(name) && !selectedNames.includes(name) ? 'assigned' : ''}
                         ${selectedNames.includes(name) ? 'selected' : ''}"
-                        onclick="${assignedPeople.includes(name) && !selectedNames.includes(name) ? 
-                            'alert("이미 배정됨!")' : 'toggleSelect(this)"'}>
+                        onclick="${!allowMultiple && assignedPeople.includes(name) && !selectedNames.includes(name) ? 
+                            'alert(\"이미 배정됨!\")' : 'toggleSelect(this)'}" 
+                        style="cursor: ${!allowMultiple && assignedPeople.includes(name) && !selectedNames.includes(name) ? 'not-allowed' : 'pointer'}">
                         ${name}
                     </div>
                 `).join('');
@@ -572,9 +589,14 @@
             document.getElementById('nameContainer').innerHTML = html;
         }
 
+        // 체크박스 변경 시 이름 목록 새로고침
+        document.getElementById('allowMultipleAssignments').addEventListener('change', renderNames);
+
         // 선택 토글
         function toggleSelect(btn) {
+            const allowMultiple = document.getElementById('allowMultipleAssignments').checked;
             const name = btn.innerText;
+            if (!allowMultiple && assignedPeople.includes(name) && !selectedNames.includes(name)) return;
             btn.classList.toggle('selected');
             selectedNames = selectedNames.includes(name) ? 
                 selectedNames.filter(n => n !== name) : 
@@ -609,8 +631,20 @@
         // 데이터 저장
         async function confirmAssignment() {
             if (!isEditableDate()) return alert("과거 날짜는 수정할 수 없습니다");
-            assignedPeople = assignedPeople.filter(n => !assignments[currentZone]?.includes(n));
-            assignedPeople.push(...selectedNames);
+            const allowMultiple = document.getElementById('allowMultipleAssignments').checked;
+            
+            if (!allowMultiple) {
+                // Remove people previously assigned to this zone from assignedPeople
+                assignedPeople = assignedPeople.filter(n => !assignments[currentZone]?.includes(n));
+                // Add newly selected people to assignedPeople
+                assignedPeople.push(...selectedNames);
+            } else {
+                // In multiple assignment mode, update assignedPeople to include all assigned people
+                assignedPeople = [].concat(...Object.values(assignments));
+                assignedPeople.push(...selectedNames);
+                assignedPeople = [...new Set(assignedPeople)]; // Remove duplicates
+            }
+            
             assignments[currentZone] = selectedNames;
 
             const date = document.getElementById('historyDate').value;

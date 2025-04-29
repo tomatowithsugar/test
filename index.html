@@ -336,6 +336,29 @@
             font-size: 0.9em;
             color: #333;
         }
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .filter-btn {
+            padding: 8px 12px;
+            font-size: 0.9em;
+            border-radius: 20px;
+            border: none;
+            background: #e0e0e0;
+            color: #333;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s;
+        }
+        .filter-btn.active {
+            background: #007AFF;
+            color: white;
+        }
+        .filter-btn:hover:not(.active) {
+            background: #d0d0d0;
+        }
     </style>
 </head>
 <body>
@@ -352,6 +375,13 @@
                 <label for="allowMultipleAssignments">동일 인원 다중 배정 허용</label>
             </div>
             <input type="text" id="searchInput" placeholder="🔍 이름 검색" onkeyup="filterNames()">
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="setCategoryFilter('all')">전체</button>
+                <button class="filter-btn" onclick="setCategoryFilter('형제')">형제</button>
+                <button class="filter-btn" onclick="setCategoryFilter('자매')">자매</button>
+                <button class="filter-btn" onclick="setCategoryFilter('집단')">집단</button>
+                <button class="filter-btn" onclick="setCategoryFilter('기타')">기타</button>
+            </div>
             <div class="selected-area">
                 <h4>선택한 인원 (<span id="selectedCount">0</span>명)</h4>
                 <div id="selectedNames"></div>
@@ -438,6 +468,7 @@
         let isEditMode = false;
         let recentVisits = {};
         let selectedZones = [];
+        let currentCategoryFilter = 'all'; // Track current category filter
 
         // 편집 가능 여부 체크
         function isEditableDate() {
@@ -563,17 +594,35 @@
             selectedNames = [...(assignments[zone] || [])];
             const zoneName = zoneData[zone] ? ` (${zoneData[zone]})` : '';
             document.getElementById('modalTitle').textContent = `구역 ${zone}${zoneName} 배정`;
-            document.getElementById('allowMultipleAssignments').checked = false; // Default to unchecked
+            document.getElementById('allowMultipleAssignments').checked = false;
+            currentCategoryFilter = 'all'; // Reset to 'all' when opening modal
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === '전체');
+            });
             document.getElementById('assignModal').style.display = 'block';
             updateSelectedDisplay();
             renderNames();
+        }
+
+        // 카테고리 필터 설정
+        function setCategoryFilter(category) {
+            currentCategoryFilter = category;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === (category === 'all' ? '전체' : category));
+            });
+            renderNames();
+            filterNames();
         }
 
         // 이름 렌더링
         function renderNames() {
             const allowMultiple = document.getElementById('allowMultipleAssignments').checked;
             let html = '';
-            for (const [type, names] of Object.entries(volunteers)) {
+            const categories = currentCategoryFilter === 'all' 
+                ? Object.entries(volunteers)
+                : Object.entries(volunteers).filter(([type]) => type === currentCategoryFilter);
+
+            for (const [type, names] of categories) {
                 html += `<h4>${type}</h4>`;
                 html += names.map(name => `
                     <div class="name-tag 
@@ -586,7 +635,9 @@
                     </div>
                 `).join('');
             }
-            document.getElementById('nameContainer').innerHTML = html;
+            
+            document.getElementById('nameContainer').innerHTML = html || '<p>해당 카테고리에 인원이 없습니다.</p>';
+            filterNames();
         }
 
         // 체크박스 변경 시 이름 목록 새로고침
@@ -634,15 +685,12 @@
             const allowMultiple = document.getElementById('allowMultipleAssignments').checked;
             
             if (!allowMultiple) {
-                // Remove people previously assigned to this zone from assignedPeople
                 assignedPeople = assignedPeople.filter(n => !assignments[currentZone]?.includes(n));
-                // Add newly selected people to assignedPeople
                 assignedPeople.push(...selectedNames);
             } else {
-                // In multiple assignment mode, update assignedPeople to include all assigned people
                 assignedPeople = [].concat(...Object.values(assignments));
                 assignedPeople.push(...selectedNames);
-                assignedPeople = [...new Set(assignedPeople)]; // Remove duplicates
+                assignedPeople = [...new Set(assignedPeople)];
             }
             
             assignments[currentZone] = selectedNames;

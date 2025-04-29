@@ -104,6 +104,19 @@
             min-height: 16px;
             font-size: 0.85em;
         }
+        .selected-name-tag {
+            display: inline-block;
+            margin: 2px 5px 2px 0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #FFE8CC;
+            color: #FFA500;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        .selected-name-tag:hover {
+            background: #FFCC99;
+        }
         .name-tag {
             display: inline-block;
             margin: 5px;
@@ -379,7 +392,7 @@
             </div>
             <input type="text" id="searchInput" placeholder="🔍 이름 검색" onkeyup="filterNames()">
             <div class="filter-buttons">
-                <button class="filter-btn active" onclick="setCategoryFilter('all')">전체</button>
+                <button class="filter-btn active" onclick copy="true" onclick="setCategoryFilter('all')">전체</button>
                 <button class="filter-btn" onclick="setCategoryFilter('형제')">형제</button>
                 <button class="filter-btn" onclick="setCategoryFilter('자매')">자매</button>
                 <button class="filter-btn" onclick="setCategoryFilter('집단')">집단</button>
@@ -658,9 +671,21 @@
             updateSelectedDisplay();
         }
 
+        // 선택된 이름 제거
+        function removeSelectedName(name) {
+            selectedNames = selectedNames.filter(n => n !== name);
+            renderNames(); // Re-render to update .selected classes
+            updateSelectedDisplay();
+        }
+
         // 선택 상태 업데이트
         function updateSelectedDisplay() {
-            document.getElementById('selectedNames').innerHTML = selectedNames.join(', ') || "선택된 인원 없음";
+            const selectedNamesDiv = document.getElementById('selectedNames');
+            selectedNamesDiv.innerHTML = selectedNames.length > 0 
+                ? selectedNames.map(name => `
+                    <span class="selected-name-tag" onclick="removeSelectedName('${name}')">${name}</span>
+                `).join('')
+                : "선택된 인원 없음";
             document.getElementById('selectedCount').textContent = selectedNames.length;
         }
 
@@ -1058,7 +1083,7 @@
             90: "힐스테이트 7차 (103-105동)",
             91: "힐스테이트 7차 (106-108동)",
             92: "힐스테이트 7차 (109-111동)",
-            93: "힐스테이트 7차 (112-114동)",
+            93: "힐s테이트 7차 (112-114동)",
             94: "힐스테이트 7차 (115-116동)",
             95: "문 치과",
             96: "(구)연세선 학원 -> (신) 우리동네키움센터",

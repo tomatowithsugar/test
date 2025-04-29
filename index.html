@@ -74,49 +74,20 @@
             background: white;
             padding: 20px;
             border-radius: 10px;
-            max-width: 900px; /* Increased width */
-            max-height: 90vh; /* Increased height */
-            margin: 5vh auto;
-            display: flex;
-            flex-direction: row; /* Two-column layout */
-            gap: 20px;
-            overflow: hidden;
-        }
-        .modal-sidebar {
-            flex: 1;
-            min-width: 250px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .modal-main {
-            flex: 2;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        #nameContainer {
-            flex-grow: 1;
+            max-width: 500px;
+            max-height: 80vh;
+            margin: 20px auto;
             overflow-y: auto;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            max-height: 60vh; /* Increased visible area */
+            display: flex;
+            flex-direction: column;
         }
-        @media (max-width: 768px) {
+        @media (max-width: 600px) {
             .modal-content {
-                flex-direction: column; /* Stack vertically on small screens */
-                max-width: 100%;
-                max-height: 100vh;
+                width: 100%;
+                height: 100%;
                 margin: 0;
-                padding: 15px;
+                padding: 20px;
                 border-radius: 0;
-            }
-            .modal-sidebar, .modal-main {
-                min-width: 100%;
-            }
-            #nameContainer {
-                max-height: 50vh; /* Adjust for mobile */
             }
         }
         .selected-area {
@@ -147,7 +118,7 @@
         #searchInput {
             width: 100%;
             padding: 12px;
-            margin: 0;
+            margin: 10px 0;
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 16px;
@@ -168,6 +139,11 @@
             top: 15px;
             color: #666;
             font-size: 0.9em;
+        }
+        #nameContainer {
+            overflow-y: auto;
+            flex-grow: 1;
+            padding: 10px 0;
         }
         .summary-modal {
             display: none;
@@ -383,11 +359,6 @@
         .filter-btn:hover:not(.active) {
             background: #d0d0d0;
         }
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
     </style>
 </head>
 <body>
@@ -398,32 +369,28 @@
     <!-- 모달 -->
     <div class="modal" id="assignModal">
         <div class="modal-content">
-            <div class="modal-sidebar">
-                <h3 id="modalTitle"></h3>
-                <div class="checkbox-container">
-                    <input type="checkbox" id="allowMultipleAssignments">
-                    <label for="allowMultipleAssignments">동일 인원 다중 배정 허용</label>
-                </div>
-                <input type="text" id="searchInput" placeholder="🔍 이름 검색">
-                <div class="filter-buttons">
-                    <button class="filter-btn active" onclick="setCategoryFilter('all')">전체</button>
-                    <button class="filter-btn" onclick="setCategoryFilter('형제')">형제</button>
-                    <button class="filter-btn" onclick="setCategoryFilter('자매')">자매</button>
-                    <button class="filter-btn" onclick="setCategoryFilter('집단')">집단</button>
-                    <button class="filter-btn" onclick="setCategoryFilter('기타')">기타</button>
-                </div>
-                <div class="selected-area">
-                    <h4>선택한 인원 (<span id="selectedCount">0</span>명)</h4>
-                    <div id="selectedNames"></div>
-                </div>
+            <h3 id="modalTitle"></h3>
+            <div class="checkbox-container">
+                <input type="checkbox" id="allowMultipleAssignments">
+                <label for="allowMultipleAssignments">동일 인원 다중 배정 허용</label>
             </div>
-            <div class="modal-main">
-                <div id="nameContainer"></div>
-                <div class="modal-actions">
-                    <button class="add-custom-btn" onclick="addCustomPerson()">+ 직접 추가</button>
-                    <button onclick="confirmAssignment()">완료</button>
-                    <button onclick="closeModal()">취소</button>
-                </div>
+            <input type="text" id="searchInput" placeholder="🔍 이름 검색" onkeyup="filterNames()">
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="setCategoryFilter('all')">전체</button>
+                <button class="filter-btn" onclick="setCategoryFilter('형제')">형제</button>
+                <button class="filter-btn" onclick="setCategoryFilter('자매')">자매</button>
+                <button class="filter-btn" onclick="setCategoryFilter('집단')">집단</button>
+                <button class="filter-btn" onclick="setCategoryFilter('기타')">기타</button>
+            </div>
+            <div class="selected-area">
+                <h4>선택한 인원 (<span id="selectedCount">0</span>명)</h4>
+                <div id="selectedNames"></div>
+            </div>
+            <div id="nameContainer"></div>
+            <button class="add-custom-btn" onclick="addCustomPerson()">+ 직접 추가</button>
+            <div style="margin-top:20px;">
+                <button onclick="confirmAssignment()">완료</button>
+                <button onclick="closeModal()">취소</button>
             </div>
         </div>
     </div>
@@ -888,9 +855,7 @@
         // 구역 삭제
         async function deleteZone(zone) {
             if (!isEditableDate()) return alert("과거 날짜는 수정할 수 없습니다");
-           
-
- const zoneName = zoneData[zone] ? ` (${zoneData[zone]})` : '';
+            const zoneName = zoneData[zone] ? ` (${zoneData[zone]})` : '';
             if (confirm(`구역 ${zone}${zoneName}을(를) 삭제하시겠습니까?`)) {
                 delete assignments[zone];
                 assignedPeople = [].concat(...Object.values(assignments));

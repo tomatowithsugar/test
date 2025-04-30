@@ -305,7 +305,7 @@
         #zonesTable tr {
             cursor: pointer;
         }
-        #zonesTable tr.disabled {
+        #zonesTable tr.disabledINDEX: 4 disabled {
             background-color: #f0f0f0;
             cursor: not-allowed;
         }
@@ -314,7 +314,7 @@
             color: white;
             font-weight: bold;
         }
-        .personal-zone, .household-count, .recent-visit {
+        .personal-zone, .household-count, .recent-visit, .zone-length {
             font-size: 0.85em;
             color: #666;
             margin-top: -2px;
@@ -390,9 +390,10 @@
                 <input type="checkbox" id="allowMultipleAssignments">
                 <label for="allowMultipleAssignments">동일 인원 다중 배정 허용</label>
             </div>
-            <input type="text" id="searchInput" placeholder="🔍 이름 검색" onkeyup="filterNames()">
+            <input.invalidate
+            type="text" id="searchInput" placeholder="🔍 이름 검색" onkeyup="filterNames()">
             <div class="filter-buttons">
-                <button class="filter-btn active" onclick copy="true" onclick="setCategoryFilter('all')">전체</button>
+                <button class="filter-btn active" onclick="setCategoryFilter('all')">전체</button>
                 <button class="filter-btn" onclick="setCategoryFilter('형제')">형제</button>
                 <button class="filter-btn" onclick="setCategoryFilter('자매')">자매</button>
                 <button class="filter-btn" onclick="setCategoryFilter('집단')">집단</button>
@@ -860,13 +861,15 @@
                 const personalZone = personalZoneData[zone] ? `[개인구역: ${personalZoneData[zone]}]` : '';
                 const household = householdData[zone] ? `[가구수: ${householdData[zone]}]` : '';
                 const recentVisit = recentVisits[zone] ? `[최근방문: ${recentVisits[zone]}]` : '[최근방문: -]';
+                const zoneLength = zoneLengthData[zone] ? `[구역길이: ${zoneLengthData[zone]}m]` : '';
                 document.getElementById('zoneList').innerHTML += `
                     <div class="zone-item">
                         <h4>구역 ${zone}${zoneName}</h4>
                         <div class="zone-info">
-                            ${personalZone ? `<div>${personalZone}</div>` : ''}
-                            ${household ? `<div>${household}</div>` : ''}
-                            ${recentVisit ? `<div>${recentVisit}</div>` : ''}
+                            ${personalZone ? `<div class="personal-zone">${personalZone}</div>` : ''}
+                            ${household ? `<div class="household-count">${household}</div>` : ''}
+                            ${recentVisit ? `<div class="recent-visit">${recentVisit}</div>` : ''}
+                            ${zoneLength ? `<div class="zone-length">${zoneLength}</div>` : ''}
                         </div>
                         <span class="edit-badge">${assignments[zone].length}명</span>
                         <div class="buttons">
@@ -946,89 +949,88 @@
         });
 
         // 지도 링크
-        // 지도 링크
-const mapLinks = {
-    1: "https://www.google.com/maps/d/embed?mid=1bYOTo09R4lpFllZCBoz8rIS3wvMzX3Y&ehbc=2E312F",
-    2: "https://www.google.com/maps/d/u/1/embed?mid=1a09TGVLXo7oWJomZBogCapuqBX2PdMk&ehbc=2E312F",
-    3: "https://www.google.com/maps/d/u/1/embed?mid=13wwGtcvmp_kxp3nv-Nx2QwatT_OtMjI&ehbc=2E312F",
-    4: "https://www.google.com/maps/d/u/1/embed?mid=1rq3Ci9qlzxGK-qe1-jF5v8LCvn_9bbU&ehbc=2E312F",
-    5: "https://www.google.com/maps/d/u/1/embed?mid=19THNLjYY5EXYttqUJHzlZmfpeWqtTGg&ehbc=2E312F",
-    6: "https://www.google.com/maps/d/u/1/embed?mid=1dUVGvLgRYTnOuQepWzw4BuocHgjRnqI&ehbc=2E312F",
-    7: "https://www.google.com/maps/d/u/1/embed?mid=1kBqohKDththrD6trpTSCWbeoX3iBKvo&ehbc=2E312F",
-    8: "https://www.google.com/maps/d/u/1/embed?mid=1jd6dP-BVCTAeC6Q4yIma8KQZDuMeMjQ&ehbc=2E312F",
-    9: "https://www.google.com/maps/d/u/1/embed?mid=1KPRyJGDItsHuRNsU2Qequ3Ayks5NswU&ehbc=2E312F",
-    10: "https://www.google.com/maps/d/u/1/embed?mid=1nZWc_Biapt5aegYY03slo50v9FvxM6A&ehbc=2E312F",
-    11: "https://www.google.com/maps/d/u/1/embed?mid=1hmFVBuY-OLMZpj37gDvNCopcu4qK-cw&ehbc=2E312F",
-    12: "https://www.google.com/maps/d/u/1/embed?mid=1djJZqWmHER3m5G9SGh5oIXnUkmJ56i8&ehbc=2E312F",
-    13: "https://www.google.com/maps/d/u/1/embed?mid=1Fp3S5Mcr35hZKzspb-J6reF8PNxMhgA&ehbc=2E312F",
-    14: "https://www.google.com/maps/d/u/1/embed?mid=12Tio9hinHhjy_OI_R3z1AT-4hV-J_K0&ehbc=2E312F",
-    15: "https://www.google.com/maps/d/u/1/embed?mid=1NFu0uv7XRCp-ZukhNKOqIZPXWdXoedI&ehbc=2E312F",
-    16: "https://www.google.com/maps/d/u/1/embed?mid=18nBgkuITKrm3ZWIJifsVcIlK0LX-83I&ehbc=2E312F",
-    17: "https://www.google.com/maps/d/u/1/embed?mid=1ldHAOZQ9tuboL2pdnPVOYjaXV9WVcDc&ehbc=2E312F",
-    18: "https://www.google.com/maps/d/u/1/embed?mid=16hsIw5gx3JhKF4xfEVcR0ZJMAa4Brcs&ehbc=2E312F",
-    19: "https://www.google.com/maps/d/u/1/embed?mid=12XeqO08ghxBkjspkVyVZthMOfFAG0rs&ehbc=2E312F",
-    20: "https://www.google.com/maps/d/u/1/embed?mid=1i8fC9C3e_ESiON-t5M9LYr2BfzmFBFQ&ehbc=2E312F",
-    21: "https://www.google.com/maps/d/u/1/embed?mid=1AgS-8blcSloaW6nILr9T64giZTxEp3Q&ehbc=2E312F",
-    22: "https://www.google.com/maps/d/u/1/embed?mid=1uJ7oBCWYk2pfKID5R0sAKOpgLASqW94&ehbc=2E312F",
-    23: "https://www.google.com/maps/d/u/1/embed?mid=1wHzZ6ucLAH3yFopla1okn9YPHKSKceQ&ehbc=2E312F",
-    24: "https://www.google.com/maps/d/u/1/embed?mid=12W7zhp0f2jPH3k3IhAtHkRrZ4oR9plE&ehbc=2E312F",
-    25: "https://www.google.com/maps/d/u/1/embed?mid=1Y6NRTha4Ra5thy26AtepTWyDltnbUVU&ehbc=2E312F",
-    26: "https://www.google.com/maps/d/u/1/embed?mid=1DYH4ETlJfnFEmYxCsK4x72sU2y4pel8&ehbc=2E312F",
-    27: "https://www.google.com/maps/d/u/1/embed?mid=1a9XtszUIsXY-WGWeqANwEeD_ga7zuuI&ehbc=2E312F",
-    28: "https://www.google.com/maps/d/u/1/embed?mid=1ER2Kx5uXyvPU2SEjtljjUmibWRUtat0&ehbc=2E312F",
-    29: "https://www.google.com/maps/d/u/1/embed?mid=1KA4xCl3IEVoTY5Td6xxBZBiJsDo4S4g&ehbc=2E312F",
-    30: "https://www.google.com/maps/d/u/1/embed?mid=1dZGruN6CXSpjxRdKcHmTWixo-nqjj2o&ehbc=2E312F",
-    31: "https://www.google.com/maps/d/u/1/embed?mid=1xuERRIcfXuT8pp5TlYVfpdTxecFooO0&ehbc=2E312F",
-    32: "https://www.google.com/maps/d/u/1/embed?mid=1Wm1Q_X3P_p32d2KytDznezNGOhRapXo&ehbc=2E312F",
-    33: "https://www.google.com/maps/d/u/1/embed?mid=1BCK0inql_XMXcpuGExBO5MDBRVkL_xY&ehbc=2E312F",
-    34: "https://www.google.com/maps/d/u/1/embed?mid=1tbyl24kdrBbEKgRluwrwbY89N_AqQ1M&ehbc=2E312F",
-    35: "https://www.google.com/maps/d/u/1/embed?mid=1h-yv9qg1djJMp1QEU1SnIK1jjljrPiY&ehbc=2E312F",
-    36: "https://www.google.com/maps/d/u/1/embed?mid=1Uco8HJ5ySvNaAgZRoIvicL0TnSB36ZE&ehbc=2E312F",
-    37: "https://www.google.com/maps/d/u/1/embed?mid=1Uco8HJ5ySvNaAgZRoIvicL0TnSB36ZE&ehbc=2E312F",
-    38: "https://www.google.com/maps/d/u/1/embed?mid=1P_Z3jFpQfHJbsOFFagIsDn_HFa76iro&ehbc=2E312F",
-    39: "https://www.google.com/maps/d/u/1/embed?mid=1z74iY4s9vHIKp5upGpBsTU_3ovXzcGg&ehbc=2E312F",
-    40: "https://www.google.com/maps/d/u/1/embed?mid=1i42fcCOVx_5JjZcB8AkiFx0br0t0ohQ&ehbc=2E312F",
-    41: "https://www.google.com/maps/d/u/1/embed?mid=1Yis1hUnfl91Y1Ur9irbUBo3KRCVtNGg&ehbc=2E312F",
-    42: "https://www.google.com/maps/d/u/1/embed?mid=1sSL3-uD8DOVSRiBT9jtDYK75Wrk1XOo&ehbc=2E312F",
-    43: "https://www.google.com/maps/d/u/1/embed?mid=1mgQSwmFs-KtSwoOM5opgrzqpSEti0pc&ehbc=2E312F",
-    44: "https://www.google.com/maps/d/u/1/embed?mid=1I6yvJifeOD44w9utCkszaeGP0lrUQxE&ehbc=2E312F",
-    45: "https://www.google.com/maps/d/u/1/embed?mid=1M0kJqAGWzU4bqkTqvvue18gSRENRjOk&ehbc=2E312F",
-    46: "https://www.google.com/maps/d/u/1/embed?mid=1QtqtLLempdDMjxqFn4Ha8ejbISGYtOo&ehbc=2E312F",
-    47: "https://www.google.com/maps/d/u/1/embed?mid=1Y7ywCQbbp6tjcJl4rWssgk62DTFj4as&ehbc=2E312F",
-    48: "https://www.google.com/maps/d/u/1/embed?mid=1Bgp7QCM_GZW6bpSDJHW1mQuCO34kCKg&ehbc=2E312F",
-    49: "https://www.google.com/maps/d/u/1/embed?mid=1TpAUhtZErJpQwlAMq3idHG3YdbJ6Hv4&ehbc=2E312F",
-    50: "https://www.google.com/maps/d/u/1/embed?mid=1XuXWikGCHMuZWH3L4I2Ejwz4N74P1Rw&ehbc=2E312F",
-    51: "https://www.google.com/maps/d/u/1/embed?mid=1qj47VALuhLFEhLZi2Hmy4OVeHdVoM1A&ehbc=2E312F",
-    52: "https://www.google.com/maps/d/u/1/embed?mid=1IiWIp41DBPlDKo9o6r-gE2tWYXaqCHo&ehbc=2E312F",
-    53: "https://www.google.com/maps/d/u/1/embed?mid=1a6IFgplfg1coLQeDgrH-Y8G8lk-M3ac&ehbc=2E312F",
-    54: "https://www.google.com/maps/d/u/1/embed?mid=1BTxzGZ_W6W4gdbzWwHP3Qfl3pjj1lXQ&ehbc=2E312F",
-    55: "https://www.google.com/maps/d/u/1/embed?mid=17r3nIauwOqqR0QIXa4i0JTgZE24y9dY&ehbc=2E312F",
-    56: "https://www.google.com/maps/d/u/1/embed?mid=1VtoPvlMydKmIyyatg9CKthtUx7M85Js&ehbc=2E312F",
-    57: "https://www.google.com/maps/d/u/1/embed?mid=1BRixcytS3T1ECEWnucvMJn9kHzU5W6M&ehbc=2E312F",
-    58: "https://www.google.com/maps/d/u/1/embed?mid=1KzSUe5Fbh6iklEyyMNuC_X7bHeUl8rQ&ehbc=2E312F",
-    59: "https://www.google.com/maps/d/u/1/embed?mid=1QWgqLfmrymLUuWpfSPFUPd0oBuCHMgM&ehbc=2E312F",
-    60: "https://www.google.com/maps/d/u/1/embed?mid=1g4_Kas_K6errotc-Fr_pV3wos8yhs4A&ehbc=2E312F",
-    61: "https://www.google.com/maps/d/u/1/embed?mid=17R_o0yfpxDsNOwos-PFBdU7TaOdjyEM&ehbc=2E312F",
-    62: "https://www.google.com/maps/d/u/1/embed?mid=1qllkAS-pD72tcAqJ_ArpcJQdsPEbdSI&ehbc=2E312F",
-    63: "https://www.google.com/maps/d/u/1/embed?mid=1-g9E0uUaZymMe_ZbAif2HFqpAkC3MGo&ehbc=2E312F",
-    64: "https://www.google.com/maps/d/u/1/embed?mid=1EfJ0hcAMOU6tI74T-5_MMuJRIB0dZyg&ehbc=2E312F",
-    65: "https://www.google.com/maps/d/u/1/embed?mid=1NMHqyAX0DdvbvqHY7WOsDaKnp6EADcs&ehbc=2E312F",
-    66: "https://www.google.com/maps/d/u/1/embed?mid=1Pzq2zHcOR9ZgpoQSWMHSXpVM0HwYxKA&ehbc=2E312F",
-    67: "https://www.google.com/maps/d/u/1/embed?mid=1E8_x4CbD-EU3eGJo33fLChvVBImdWJk&ehbc=2E312F",
-    68: "https://www.google.com/maps/d/u/1/embed?mid=1WoThwCqN-yPiB8qtTT90HoplaCba5pk&ehbc=2E312F",
-    69: "https://www.google.com/maps/d/u/1/embed?mid=1hsfnfUtrD9ibnBQSR70Pb7ylHW1aGFg&ehbc=2E312F",
-    70: "https://www.google.com/maps/d/u/1/embed?mid=1RV96uuEKVk87fzexUjL2JOvIrN4uYnA&ehbc=2E312F",
-    71: "https://www.google.com/maps/d/u/1/embed?mid=1VurrwzX3WVMnYsluv4xFuTKLA9wRDnA&ehbc=2E312F",
-    72: "https://www.google.com/maps/d/u/1/embed?mid=1POFWkagA41zsDCPOuZDYQZty9AmQq7M&ehbc=2E312F",
-    73: "https://www.google.com/maps/d/u/1/embed?mid=1iO_cmGwSUd29CiwaqpHXtv_0VZEoyY0&ehbc=2E312F",
-    74: "https://www.google.com/maps/d/u/1/embed?mid=1NRGgv3ceJU7rxU6FCBeVk_KKAgcWxbs&ehbc=2E312F",
-    75: "https://www.google.com/maps/d/u/1/embed?mid=1rIDX6C6RW9rTaD-N9UwjXcBB4MPGHhw&ehbc=2E312F",
-    76: "https://www.google.com/maps/d/u/1/embed?mid=1XYu2uXqbFvHPrjoY78CzeTm1tx69NJI&ehbc=2E312F",
-    77: "https://www.google.com/maps/d/u/1/embed?mid=1NX-Ylip-EEp4OB25wzuWae0ASAmM5TE&ehbc=2E312F",
-    78: "https://www.google.com/maps/d/g/u/1/embed?mid=1TmXNFyj_vjHvdSvQBLvPmNksoWuIlDQ&ehbc=2E312F",
-    79: "https://www.google.com/maps/d/u/1/embed?mid=1eIe0RmmX-ksRZ738brvfnCpr0Y8KX2I&ehbc=2E312F",
-    80: "https://www.google.com/maps/d/u/1/embed?mid=11CCsKOjxWOjpkrGjLbleYPYn1dR0JUU&ehbc=2E312F"
-};
+        const mapLinks = {
+            1: "https://www.google.com/maps/d/embed?mid=1bYOTo09R4lpFllZCBoz8rIS3wvMzX3Y&ehbc=2E312F",
+            2: "https://www.google.com/maps/d/u/1/embed?mid=1a09TGVLXo7oWJomZBogCapuqBX2PdMk&ehbc=2E312F",
+            3: "https://www.google.com/maps/d/u/1/embed?mid=13wwGtcvmp_kxp3nv-Nx2QwatT_OtMjI&ehbc=2E312F",
+            4: "https://www.google.com/maps/d/u/1/embed?mid=1rq3Ci9qlzxGK-qe1-jF5v8LCvn_9bbU&ehbc=2E312F",
+            5: "https://www.google.com/maps/d/u/1/embed?mid=19THNLjYY5errEXYttqUJHzlZmfpeWqtTGg&ehbc=2E312F",
+            6: "https://www.google.com/maps/d/u/1/embed?mid=1dUVGvLgRYTnOuQepWzw4BuocHgjRnqI&ehbc=2E312F",
+            7: "https://www.google.com/maps/d/u/1/embed?mid=1kBqohKDththrD6trpTSCWbeoX3iBKvo&ehbc=2E312F",
+            8: "https://www.google.com/maps/d/u/1/embed?mid=1jd6dP-BVCTAeC6Q4yIma8KQZDuMeMjQ&ehbc=2E312F",
+            9: "https://www.google.com/maps/d/u/1/embed?mid=1KPRyJGDItsHuRNsU2Qequ3Ayks5NswU&ehbc=2E312F",
+            10: "https://www.google.com/maps/d/u/1/embed?mid=1nZWc_Biapt5aegYY03slo50v9FvxM6A&ehbc=2E312F",
+            11: "https://www.google.com/maps/d/u/1/embed?mid=1hmFVBuY-OLMZpj37gDvNCopcu4qK-cw&ehbc=2E312F",
+            12: "https://www.google.com/maps/d/u/1/embed?mid=1djJZqWmHER3m5G9SGh5oIXnUkmJ56i8&ehbc=2E312F",
+            13: "https://www.google.com/maps/d/u/1/embed?mid=1Fp3S5Mcr35hZKzspb-J6reF8PNxMhgA&ehbc=2E312F",
+            14: "https://www.google.com/maps/d/u/1/embed?mid=12Tio9hinHhjy_OI_R3z1AT-4hV-J_K0&ehbc=2E312F",
+            15: "https://www.google.com/maps/d/u/1/embed?mid=1NFu0uv7XRCp-ZukhNKOqIZPXWdXoedI&ehbc=2E312F",
+            16: "https://www.google.com/maps/d/u/1/embed?mid=18nBgkuITKrm3ZWIJifsVcIlK0LX-83I&ehbc=2E312F",
+            17: "https://www.google.com/maps/d/u/1/embed?mid=1ldHAOZQ9tuboL2pdnPVOYjaXV9WVcDc&ehbc=2E312F",
+            18: "https://www.google.com/maps/d/u/1/embed?mid=16hsIw5gx3JhKF4xfEVcR0ZJMAa4Brcs&ehbc=2E312F",
+            19: "https://www.google.com/maps/d/u/1/embed?mid=12XeqO08ghxBkjspkVyVZthMOfFAG0rs&ehbc=2E312F",
+            20: "https://www.google.com/maps/d/u/1/embed?mid=1i8fC9C3e_ESiON-t5M9LYr2BfzmFBFQ&ehbc=2E312F",
+            21: "https://www.google.com/maps/d/u/1/embed?mid=1AgS-8blcSloaW6nILr9T64giZTxEp3Q&ehbc=2E312F",
+            22: "https://www.google.com/maps/d/u/1/embed?mid=1uJ7oBCWYk2pfKID5R0sAKOpgLASqW94&ehbc=2E312F",
+            23: "https://www.google.com/maps/d/u/1/embed?mid=1wHzZ6ucLAH3yFopla1okn9YPHKSKceQ&ehbc=2E312F",
+            24: "https://www.google.com/maps/d/u/1/embed?mid=12W7zhp0f2jPH3k3IhAtHkRrZ4oR9plE&ehbc=2E312F",
+            25: "https://www.google.com/maps/d/u/1/embed?mid=1Y6NRTha4Ra5thy26AtepTWyDltnbUVU&ehbc=2E312F",
+            26: "https://www.google.com/maps/d/u/1/embed?mid=1DYH4ETlJfnFEmYxCsK4x72sU2y4pel8&ehbc=2E312F",
+            27: "https://www.google.com/maps/d/u/1/embed?mid=1a9XtszUIsXY-WGWeqANwEeD_ga7zuuI&ehbc=2E312F",
+            28: "https://www.google.com/maps/d/u/1/embed?mid=1ER2Kx5uXyvPU2SEjtljjUmibWRUtat0&ehbc=2E312F",
+            29: "https://www.google.com/maps/d/u/1/embed?mid=1KA4xCl3IEVoTY5Td6xxBZBiJsDo4S4g&ehbc=2E312F",
+            30: "https://www.google.com/maps/d/u/1/embed?mid=1dZGruN6CXSpjxRdKcHmTWixo-nqjj2o&ehbc=2E312F",
+            31: "https://www.google.com/maps/d/u/1/embed?mid=1xuERRIcfXuT8pp5TlYVfpdTxecFooO0&ehbc=2E312F",
+            32: "https://www.google.com/maps/d/u/1/embed?mid=1Wm1Q_X3P_p32d2KytDznezNGOhRapXo&ehbc=2E312F",
+            33: "https://www.google.com/maps/d/u/1/embed?mid=1BCK0inql_XMXcpuGExBO5MDBRVkL_xY&ehbc=2E312F",
+            34: "https://www.google.com/maps/d/u/1/embed?mid=1tbyl24kdrBbEKgRluwrwbY89N_AqQ1M&ehbc=2E312F",
+            35: "https://www.google.com/maps/d/u/1/embed?mid=1h-yv9qg1djJMp1QEU1SnIK1jjljrPiY&ehbc=2E312F",
+            36: "https://www.google.com/maps/d/u/1/embed?mid=1Uco8HJ5ySvNaAgZRoIvicL0TnSB36ZE&ehbc=2E312F",
+            37: "https://www.google.com/maps/d/u/1/embed?mid=1Uco8HJ5ySvNaAgZRoIvicL0TnSB36ZE&ehbc=2E312F",
+            38: "https://www.google.com/maps/d/u/1/embed?mid=1P_Z3jFpQfHJbsOFFagIsDn_HFa76iro&ehbc=2E312F",
+            39: "https://www.google.com/maps/d/u/1/embed?mid=1z74iY4s9vHIKp5upGpBsTU_3ovXzcGg&ehbc=2E312F",
+            40: "https://www.google.com/maps/d/u/1/embed?mid=1i42fcCOVx_5JjZcB8AkiFx0br0t0ohQ&ehbc=2E312F",
+            41: "https://www.google.com/maps/d/u/1/embed?mid=1Yis1hUnfl91Y1Ur9irbUBo3KRCVtNGg&ehbc=2E312F",
+            42: "https://www.google.com/maps/d/u/1/embed?mid=1sSL3-uD8DOVSRiBT9jtDYK75Wrk1XOo&ehbc=2E312F",
+            43: "https://www.google.com/maps/d/u/1/embed?mid=1mgQSwmFs-KtSwoOM5opgrzqpSEWi0pc&ehbc=2E312F",
+            44: "https://www.google.com/maps/d/u/1/embed?mid=1I6yvJifeOD44w9utCkszaeGP0lrUQxE&ehbc=2E312F",
+            45: "https://www.google.com/maps/d/u/1/embed?mid=1M0kJqAGWzU4bqkTqvvue18gSRENRjOk&ehbc=2E312F",
+            46: "https://www.google.com/maps/d/u/1/embed?mid=1QtqtLLempdDMjxqFn4Ha8ejbISGYtOo&ehbc=2E312F",
+            47: "https://www.google.com/maps/d/u/1/embed?mid=1Y7ywCQbbp6tjcJl4rWssgk62DTFj4as&ehbc=2E312F",
+            48: "https://www.google.com/maps/d/u/1/embed?mid=1Bgp7QCM_GZW6bpSDJHW1mQuCO34kCKg&ehbc=2E312F",
+            49: "https://www.google.com/maps/d/u/1/embed?mid=1TpAUhtZErJpQwlAMq3idHG3YdbJ6Hv4&ehbc=2E312F",
+            50: "https://www.google.com/maps/d/u/1/embed?mid=1XuXWikGCHMuZWH3L4I2Ejwz4N74P1Rw&ehbc=2E312F",
+            51: "https://www.google.com/maps/d/u/1/embed?mid=1qj47VALuhLFEhLZi2Hmy4OVeHdVoM1A&ehbc=2E312F",
+            52: "https://www.google.com/maps/d/u/1/embed?mid=1IiWIp41DBPlDKo9o6r-gE2tWYXaqCHo&ehbc=2E312F",
+            53: "https://www.google.com/maps/d/u/1/embed?mid=1a6IFgplfg1coLQeDgrH-Y8G8lk-M3ac&ehbc=2E312F",
+            54: "https://www.google.com/maps/d/u/1/embed?mid=1BTxzGZ_W6W4gdbzWwHP3Qfl3pjj1lXQ&ehbc=2E312F",
+            55: "https://www.google.com/maps/d/u/1/embed?mid=17r3nIauwOqqR0QIXa4i0JTgZE24y9dY&ehbc=2E312F",
+            56: "https://www.google.com/maps/d/u/1/embed?mid=1VtoPvlMydKmIyyatg9CKthtUx7M85Js&ehbc=2E312F",
+            57: "https://www.google.com/maps/d/u/1/embed?mid=1BRixcytS3T1ECEWnucvMJn9kHzU5W6M&ehbc=2E312F",
+            58: "https://www.google.com/maps/d/u/1/embed?mid=1KzSUe5Fbh6iklEyyMNuC_X7bHeUl8rQ&ehbc=2E312F",
+            59: "https://www.google.com/maps/d/u/1/embed?mid=1QWgqLfmrymLUuWpfSPFUPd0oBuCHMgM&ehbc=2E312F",
+            60: "https://www.google.com/maps/d/u/1/embed?mid=1g4_Kas_K6errotc-Fr_pV3wos8yhs4A&ehbc=2E312F",
+            61: "https://www.google.com/maps/d/u/1/embed?mid=17R_o0yfpxDsNOwos-PFBdU7TaOdjyEM&ehbc=2E312F",
+            62: "https://www.google.com/maps/d/u/1/embed?mid=1qllkAS-pD72tcAqJ_ArpcJQdsPEbdSI&ehbc=2E312F",
+            63: "https://www.google.com/maps/d/u/1/embed?mid=1-g9E0uUaZymMe_ZbAif2HFqpAkC3MGo&ehbc=2E312F",
+            64: "https://www.google.com/maps/d/u/1/embed?mid=1EfJ0hcAMOU6tI74T-5_MMuJRIB0dZyg&ehbc=2E312F",
+            65: "https://www.google.com/maps/d/u/1/embed?mid=1NMHqyAX0DdvbvqHY7WOsDaKnp6EADcs&ehbc=2E312F",
+            66: "https://www.google.com/maps/d/u/1/embed?mid=1Pzq2zHcOR9ZgpoQSWMHSXpVM0HwYxKA&ehbc=2E312F",
+            67: "https://www.google.com/maps/d/u/1/embed?mid=1E8_x4CbD-EU3eGJo33fLChvVBImdWJk&ehbc=2E312F",
+            68: "https://www.google.com/maps/d/u/1/embed?mid=1WoThwCqN-yPiB8qtTT90HoplaCba5pk&ehbc=2E312F",
+            69: "https://www.google.com/maps/d/u/1/embed?mid=1hsfnfUtrD9ibnBQSR70Pb7ylHW1aGFg&ehbc=2E312F",
+            70: "https://www.google.com/maps/d/u/1/embed?mid=1RV96uuEKVk87fzexUjL2JOvIrN4uYnA&ehbc=2E312F",
+            71: "https://www.google.com/maps/d/u/1/embed?mid=1VurrwzX3WVMnYsluv4xFuTKLA9wRDnA&ehbc=2E312F",
+            72: "https://www.google.com/maps/d/u/1/embed?mid=1POFWkagA41zsDCPOuZDYQZty9AmQq7M&ehbc=2E312F",
+            73: "https://www.google.com/maps/d/u/1/embed?mid=1iO_cmGwSUd29CiwaqpHXtv_0VZEoyY0&ehbc=2E312F",
+            74: "https://www.google.com/maps/d/u/1/embed?mid=1NRGgv3ceJU7rxU6FCBeVk_KKAgcWxbs&ehbc=2E312F",
+            75: "https://www.google.com/maps/d/u/1/embed?mid=1rIDX6C6RW9rTaD-N9UwjXcBB4MPGHhw&ehbc=2E312F",
+            76: "https://www.google.com/maps/d/u/1/embed?mid=1XYu2uXqbFvHPrjoY78CzeTm1tx69NJI&ehbc=2E312F",
+            77: "https://www.google.com/maps/d/u/1/embed?mid=1NX-Ylip-EEp4OB25wzuWae0ASAmM5TE&ehbc=2E312F",
+            78: "https://www.google.com/maps/d/u/1/embed?mid=1TmXNFyj_vjHvdSvQBLvPmNksoWuIlDQ&ehbc=2E312F",
+            79: "https://www.google.com/maps/d/u/1/embed?mid=1eIe0RmmX-ksRZ738brvfnCpr0Y8KX2I&ehbc=2E312F",
+            80: "https://www.google.com/maps/d/u/1/embed?mid=11CCsKOjxWOjpkrGjLbleYPYn1dR0JUU&ehbc=2E312F"
+        };
 
         // 구역 정보 데이터
         const zoneData = {
@@ -1124,7 +1126,7 @@ const mapLinks = {
             90: "힐스테이트 7차 (103-105동)",
             91: "힐스테이트 7차 (106-108동)",
             92: "힐스테이트 7차 (109-111동)",
-            93: "힐s테이트 7차 (112-114동)",
+            93: "힐스테이트 7차 (112-114동)",
             94: "힐스테이트 7차 (115-116동)",
             95: "문 치과",
             96: "(구)연세선 학원 -> (신) 우리동네키움센터",
@@ -1206,7 +1208,7 @@ const mapLinks = {
             172: "뉴타운 (112-115)",
             173: "뉴타운 (1101-1102)",
             174: "뉴타운 (1103-1105)",
-            175: "뉴타운 (1106-1110)",
+            175: "뉴타운 (1106-1110)"
         };
 
         for (let i = 176; i <= 268; i++) {
@@ -1444,10 +1446,90 @@ const mapLinks = {
             268: 126
         };
 
+        // 구역 길이 데이터 (단위: m)
+        const zoneLengthData = {
+            1: 567,
+            2: 532,
+            3: 305,
+            4: 626,
+            5: 364,
+            6: 276,
+            7: 458,
+            8: 452,
+            9: 486,
+            10: 271,
+            11: 384,
+            12: 267,
+            13: 514,
+            14: 391,
+            15: 517,
+            16: 436,
+            17: 599,
+            18: 499,
+            19: 317,
+            20: 313,
+            21: 380,
+            22: 518,
+            23: 350,
+            24: 374,
+            25: 399,
+            26: 412,
+            27: 425,
+            28: 410,
+            29: 232,
+            30: 413,
+            31: 353,
+            32: 810,
+            33: 496,
+            34: 274,
+            35: 212,
+            38: 244,
+            39: 492,
+            40: 420,
+            41: 252,
+            42: 279,
+            43: 399,
+            44: 428,
+            45: 273,
+            46: 375,
+            47: 391,
+            48: 519,
+            49: 573,
+            50: 532,
+            51: 422,
+            52: 394,
+            53: 471,
+            54: 856,
+            55: 506,
+            58: 210,
+            59: 329,
+            60: 324,
+            61: 292,
+            62: 383,
+            63: 259,
+            64: 424,
+            65: 648,
+            66: 297,
+            67: 397,
+            68: 402,
+            69: 450,
+            70: 561,
+            71: 534,
+            72: 440,
+            73: 376,
+            74: 292,
+            75: 308,
+            76: 340,
+            77: 317,
+            78: 435,
+            79: 345,
+	    80: 665
+	};
+
         // 자원봉사자 데이터
         const volunteers = {
-            형제: ["김기권", "김상연", "김은석", "김인기", "김철호", "박상익", "박원준", "박종화", "박진걸", "박희범", "박희종", "사영환", "서정길", "양재은", "양진우", "이목영", "이선", "이종호", "이현석", "임종목", "임현수", "전종경", "전진해", "전필용", "정순도", "정종민", "정진수", "정해균"],
-            자매: ["강성임", "강승미", "강승희", "곽순호", "권영미", "권영숙", "권수진", "김경애", "김귀자", "김동임", "김복실", "김솔", "김영아", "김영애", "김영순", "김옥순A", "김옥순B", "김은희", "김인순", "김인희", "김정숙", "김춘조", "김희재", "문설형", "민규희", "박선아", "박순례", "박여자", "박은숙", "박현숙", "백경자", "변현숙", "서광옥", "서혜경", "손귀선", "송옥순", "신부지", "신연순", "심자인", "안영자", "양동순", "양지예", "양지은", "연선미", "유민지", "유순지", "우옥희", "이경순", "이경현", "이금덕", "이금자", "이명윤", "이병임", "이아영", "이애선", "이영자", "이영재", "이재희", "이지애", "이채은", "이화숙", "이희숙", "이희열", "임규환", "임귀녀", "임순자", "임애진", "임여진", "장평원", "정송은", "정옥연", "조금순", "조명자", "조인순", "최건자", "최명수", "최문숙", "최연진", "홍명순", "홍은희"],
+            형제: ["김기권", "김상연", "김은석", "김인기", "김철호", "박상익", "박원준", "박종화", "박진걸", "박희범", "박희종", "사영환", "서기원", "서정길", "양재은", "양진우", "이목영", "이선", "이종호", "이현석", "임종목", "임현수", "전종경", "전진해", "전필용", "정순도", "정종민", "정진수", "정해균"],
+            자매: ["강성임", "강승미", "강승희", "곽순호", "권영미", "권영숙", "권수진", "김경애", "김귀자", "김동임", "김복실", "김솔", "김영아", "김영애", "김영순", "김옥순A", "김옥순B", "김은희", "김인순", "김인희", "김정숙", "김춘조", "김희재", "문설형", "민규희", "박선아", "박순례", "박여자", "박은숙", "박현숙", "백경자", "변현숙", "서광옥", "서혜경", "손귀선", "송옥순", "신부지", "신연순", "심자인", "안영자", "양동순", "양지예", "양지은", "연선미", "용옥자", "유민지", "유순지", "우옥희", "이경순", "이경현", "이금덕", "이금자", "이명윤", "이병임", "이아영", "이애선", "이영자", "이영재", "이재희", "이지애", "이채은", "이화숙", "이희숙", "이희열", "임규환", "임귀녀", "임순자", "임애진", "임여진", "장평원", "정송은", "정옥연", "조금순", "조명자", "조인순", "최건자", "최명수", "최문숙", "최연진", "홍명순", "홍은희"],
             자녀: ["박시우","양다솜","이채은"],
             집단: ["동부집단","서부집단","남부집단","북부집단","연서집단","연신내집단"],
             기타: []

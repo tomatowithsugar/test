@@ -383,32 +383,32 @@
     <div class="zone-list" id="zoneList"></div>
 
     <!-- 모달 -->
-    <div class="modal" id="assignModal">
-        <div class="modal-content">
-            <h3 id="modalTitle"></h3>
-            <div class="checkbox-container">
-                <input type="checkbox" id="allowMultipleAssignments">
-                <label for="allowMultipleAssignments">동일 인원 다중 배정 허용</label>
-            </div>
-            <input.invalidate
+<div class="modal" id="assignModal">
+    <div class="modal-content">
+        <h3 id="modalTitle"></h3>
+        <div class="checkbox-container">
+            <input type="checkbox" id="allowMultipleAssignments">
+            <label for="allowMultipleAssignments">동일 인원 다중 배정 허용</label>
+        </div>
+        <input
             type="text" id="searchInput" placeholder="🔍 이름 검색" onkeyup="filterNames()">
-            <div class="filter-buttons">
-                <button class="filter-btn active" onclick="setCategoryFilter('all')">전체</button>
-                <button class="filter-btn" onclick="setCategoryFilter('형제')">형제</button>
-                <button class="filter-btn" onclick="setCategoryFilter('자매')">자매</button>
-                <button class="filter-btn" onclick="setCategoryFilter('집단')">집단</button>
-                <button class="filter-btn" onclick="setCategoryFilter('기타')">기타</button>
-            </div>
-            <div class="selected-area">
-                <h4>선택한 인원 (<span id="selectedCount">0</span>명)</h4>
-                <div id="selectedNames"></div>
-            </div>
-            <div id="nameContainer"></div>
-            <div style="margin-top:20px; display: flex; gap: 10px; justify-content: flex-end;">
-                <button onclick="confirmAssignment()">완료</button>
-                <button onclick="closeModal()">취소</button>
-                <button class="add-custom-btn" onclick="addCustomPerson()">+ 직접 추가</button>
-            </div>
+        <div class="filter-buttons">
+            <button class="filter-btn active" onclick="setCategoryFilter('all')">전체</button>
+            <button class="filter-btn" onclick="setCategoryFilter('형제')">형제</button>
+            <button class="filter-btn" onclick="setCategoryFilter('자매')">자매</button>
+            <button class="filter-btn" onclick="setCategoryFilter('집단')">집단</button>
+            <button class="filter-btn" onclick="setCategoryFilter('기타')">기타</button>
+        </div>
+        <div class="selected-area">
+            <h4>선택한 인원 (<span id="selectedCount">0</span>명)</h4>
+            <div id="selectedNames"></div>
+        </div>
+        <div id="nameContainer"></div>
+        <div style="margin-top:20px; display: flex; gap: 10px; justify-content: flex-end;">
+            <button onclick="confirmAssignment()">완료</button>
+            <button onclick="closeModal()">취소</button>
+            <button class="add-custom-btn" onclick="addCustomPerson()">+ 직접 추가</button>
+        </div>
         </div>
     </div>
 

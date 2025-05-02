@@ -305,7 +305,7 @@
         #zonesTable tr {
             cursor: pointer;
         }
-        #zonesTable tr.disabledINDEX: 4 disabled {
+        #zonesTable tr.disabled {
             background-color: #f0f0f0;
             cursor: not-allowed;
         }
@@ -383,32 +383,32 @@
     <div class="zone-list" id="zoneList"></div>
 
     <!-- 모달 -->
-<div class="modal" id="assignModal">
-    <div class="modal-content">
-        <h3 id="modalTitle"></h3>
-        <div class="checkbox-container">
-            <input type="checkbox" id="allowMultipleAssignments">
-            <label for="allowMultipleAssignments">동일 인원 다중 배정 허용</label>
-        </div>
-        <input
-            type="text" id="searchInput" placeholder="🔍 이름 검색" onkeyup="filterNames()">
-        <div class="filter-buttons">
-            <button class="filter-btn active" onclick="setCategoryFilter('all')">전체</button>
-            <button class="filter-btn" onclick="setCategoryFilter('형제')">형제</button>
-            <button class="filter-btn" onclick="setCategoryFilter('자매')">자매</button>
-            <button class="filter-btn" onclick="setCategoryFilter('집단')">집단</button>
-            <button class="filter-btn" onclick="setCategoryFilter('기타')">기타</button>
-        </div>
-        <div class="selected-area">
-            <h4>선택한 인원 (<span id="selectedCount">0</span>명)</h4>
-            <div id="selectedNames"></div>
-        </div>
-        <div id="nameContainer"></div>
-        <div style="margin-top:20px; display: flex; gap: 10px; justify-content: flex-end;">
-            <button onclick="confirmAssignment()">완료</button>
-            <button onclick="closeModal()">취소</button>
-            <button class="add-custom-btn" onclick="addCustomPerson()">+ 직접 추가</button>
-        </div>
+    <div class="modal" id="assignModal">
+        <div class="modal-content">
+            <h3 id="modalTitle"></h3>
+            <div class="checkbox-container">
+                <input type="checkbox" id="allowMultipleAssignments">
+                <label for="allowMultipleAssignments">동일 인원 다중 배정 허용</label>
+            </div>
+            <input
+                type="text" id="searchInput" placeholder="🔍 이름 검색" onkeyup="filterNames()">
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="setCategoryFilter('all')">전체</button>
+                <button class="filter-btn" onclick="setCategoryFilter('형제')">형제</button>
+                <button class="filter-btn" onclick="setCategoryFilter('자매')">자매</button>
+                <button class="filter-btn" onclick="setCategoryFilter('집단')">집단</button>
+                <button class="filter-btn" onclick="setCategoryFilter('기타')">기타</button>
+            </div>
+            <div class="selected-area">
+                <h4>선택한 인원 (<span id="selectedCount">0</span>명)</h4>
+                <div id="selectedNames"></div>
+            </div>
+            <div id="nameContainer"></div>
+            <div style="margin-top:20px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="confirmAssignment()">완료</button>
+                <button onclick="closeModal()">취소</button>
+                <button class="add-custom-btn" onclick="addCustomPerson()">+ 직접 추가</button>
+            </div>
         </div>
     </div>
 
@@ -550,6 +550,15 @@
             updateUIState();
         });
 
+        // 히스토리 로드
+        async function loadHistory() {
+            const date = document.getElementById('historyDate').value;
+            const doc = await db.collection('history').doc(date).get();
+            assignments = doc.exists ? doc.data().zones : {};
+            assignedPeople = [].concat(...Object.values(assignments));
+            initZones();
+        }
+
         // 최근 방문 데이터 불러오기
         async function loadRecentVisits() {
             recentVisits = {};
@@ -580,7 +589,7 @@
             const zone = prompt("구역 번호 입력 (1-268)");
             if (!zone || zone < 1 || zone > 268) return alert("1-268 사이 숫자 입력");
             
-            if (!assignments[zone]) assignments[zone] = [];
+            if (!assignments(zone)) assignments[zone] = [];
             initZones();
         }
 
@@ -859,16 +868,16 @@
             for (const zone in assignments) {
                 const zoneName = zoneData[zone] ? ` (${zoneData[zone]})` : '';
                 const personalZone = personalZoneData[zone] ? `[개인구역: ${personalZoneData[zone]}]` : '';
-		const recentVisit = recentVisits[zone] ? `[최근방문: ${recentVisits[zone]}]` : '[최근방문: -]';
-                const household = householdData[zone] ? `[가구수: ${householdData[zone]}]` : ''; 
+                const household = householdData[zone] ? `[가구수: ${householdData[zone]}]` : '';
+                const recentVisit = recentVisits[zone] ? `[최근방문: ${recentVisits[zone]}]` : '[최근방문: -]';
                 const zoneLength = zoneLengthData[zone] ? `[구역길이: ${zoneLengthData[zone]}m]` : '';
                 document.getElementById('zoneList').innerHTML += `
                     <div class="zone-item">
                         <h4>구역 ${zone}${zoneName}</h4>
                         <div class="zone-info">
                             ${personalZone ? `<div class="personal-zone">${personalZone}</div>` : ''}
-                            ${household ? `<div class="household-count">${household}</div>` : ''}
                             ${recentVisit ? `<div class="recent-visit">${recentVisit}</div>` : ''}
+                            ${household ? `<div class="household-count">${household}</div>` : ''}
                             ${zoneLength ? `<div class="zone-length">${zoneLength}</div>` : ''}
                         </div>
                         <span class="edit-badge">${assignments[zone].length}명</span>

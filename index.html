@@ -859,8 +859,8 @@
             for (const zone in assignments) {
                 const zoneName = zoneData[zone] ? ` (${zoneData[zone]})` : '';
                 const personalZone = personalZoneData[zone] ? `[개인구역: ${personalZoneData[zone]}]` : '';
-                const household = householdData[zone] ? `[가구수: ${householdData[zone]}]` : '';
-                const recentVisit = recentVisits[zone] ? `[최근방문: ${recentVisits[zone]}]` : '[최근방문: -]';
+		const recentVisit = recentVisits[zone] ? `[최근방문: ${recentVisits[zone]}]` : '[최근방문: -]';
+                const household = householdData[zone] ? `[가구수: ${householdData[zone]}]` : ''; 
                 const zoneLength = zoneLengthData[zone] ? `[구역길이: ${zoneLengthData[zone]}m]` : '';
                 document.getElementById('zoneList').innerHTML += `
                     <div class="zone-item">
